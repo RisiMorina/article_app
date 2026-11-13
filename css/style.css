@@ -837,3 +837,27 @@ body.resizing .r-body { transition: none; }
 .book.flat.toread .spine { box-shadow: inset 8px 0 0 var(--accent); }
 .stack .book:hover, .stack .book:focus-within { transform: translate3d(0, -2px, calc(var(--D) * .42)) rotate(var(--tilt, 0deg)); }
 .hero-room .stack .book { width: calc(var(--bw) * var(--k)); height: calc(var(--bh) * (.6 + var(--k) * .4)); }
+
+/* =========================================================
+   Photographed bookcases: images/case.webp is an empty case; each folder is a shelf of it, the books are real 3D boxes.
+   Sizes are in "case units" (the photo is 880 wide): --u is one unit in px, set per case from its width.
+   ========================================================= */
+.pcase { --D: calc(110 * var(--u)); --bd: calc(48 * var(--u)); position: relative; flex: none; width: var(--pw); aspect-ratio: 880 / 1168; margin: 0 0 56px var(--gutter, 128px); transform-style: preserve-3d; }
+.pcase-img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; user-select: none; }
+.pslot { position: absolute; left: 0; right: 0; transform-style: preserve-3d; }
+.pslot.drop { box-shadow: inset 0 0 0 2px var(--accent); border-radius: 4px; }
+.pslot .books { position: absolute; bottom: 0; height: 100%; display: flex; align-items: flex-end; gap: calc(2 * var(--u)); margin: 0; padding: 0; min-height: 0; list-style: none; transform-style: preserve-3d; }
+.pcase .book { width: calc(var(--bw) * var(--u)); height: calc(var(--bh) * var(--u)); }
+.pcase .book .body { transform: translateZ(calc(var(--bd) + 2px)) rotate(var(--lean, 0deg)); }
+.pcase .spine { padding: calc(14 * var(--u)) 0; }
+.pcase .spine-title { padding-top: calc(6 * var(--u)); font-size: max(7.5px, calc(14.5 * var(--u))); }
+.pcase .book.lean-l { margin-left: calc(var(--bh) * var(--u) * var(--ls, 0)); }
+.pcase .book.lean-r { margin-right: calc(var(--bh) * var(--u) * var(--ls, 0)); }
+.pcase .stack { margin-left: calc(6 * var(--u)); }
+.pcase .stack .book { width: calc(var(--bw) * var(--u)); height: calc(var(--bh) * var(--u)); margin-left: calc(var(--off, 0) * var(--u)); }
+.pcase .book.flat .spine { padding: 0 calc(8 * var(--u)); }
+.pcase .shelf-label { bottom: calc(10 * var(--u)); right: calc(100% + 20px); transform: none; }
+.pcase.right .shelf-label { right: auto; left: calc(100% + 20px); }
+.pcase .shelf-empty { align-self: center; padding: 0 0 calc(30 * var(--u)) calc(14 * var(--u)); font-size: 13px; }
+.hero-room .wall { width: calc(560px + 112px); }
+.hero-room .wall .pcase { margin: 0; }

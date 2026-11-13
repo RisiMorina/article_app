@@ -61,13 +61,9 @@ highlights: [{ id, page, text, rects: [{x,y,w,h}], color, note, createdAt, updat
   `Library.filter` is `all | toread | unsorted | folder:<name>`. The start screen shows a "Reading list (n)" button.
 - Adding PDFs inside the library does **not** open the reader: they go on the reading list (`toRead: true`) and into the
   folder that is open. Only the start screen's "Choose a PDF" with one file still opens the reader straight away.
-- The library is drawn as **one bookcase**: every folder is a shelf (plus "No folder"), labelled beside the case with a short
-  line pointing at it. With 7 or more shelves it becomes **two cases standing in a corner** (`.cabinets.two`, CSS 3D
-  tilt, labels of the right case on its right). Each article is a book spine with its title. Thickness follows the page
-  count, colour and height come from a hash of the id. A bookmark ribbon on a spine means "To read". A shelf wraps onto an
-  extra board when full (`Library._shelf`, re-rendered on resize). Drag a book onto another shelf to move it. Hovering or
-  focusing a book lifts it and shows a card with the title, details, the "To read" toggle, a folder select (with
-  "New folder…") and delete. Clicking the spine opens it.
+- The library is drawn as **photographed bookcases** (see "Photographed bookcases" below): every folder is a shelf, labelled beside the case.
+  Drag a book onto another shelf to move it. Hovering or focusing a book pulls it out and (in the library page) shows a card with the title,
+  details, the "To read" toggle, a folder select (with "New folder…") and delete. Clicking the spine opens it.
 - (Old list rows are gone; `.art*` CSS is unused.) Folder select and "To read" toggle: Folders are created/renamed/deleted in the
   library; deleting a folder keeps its articles (they become "No folder"). Names are unique, case-insensitive.
 
@@ -81,7 +77,7 @@ highlights: [{ id, page, text, rects: [{x,y,w,h}], color, note, createdAt, updat
   part of the Markdown/HTML/print export (notes only).
 
 ## Start screen hero
-- `#/` has two sections. The first screen (`.hero`, 100svh) shows **only a library room**: the real library as two walls of
+- `#/` has two sections. The first screen (`.hero`, 100svh) shows **only a library room**: the real library as two photographed
   bookcases meeting at a **90 degree corner** (real CSS 3D: each `.wall` is turned 45 degrees around the corner line, with a
   perspective on `.hero-room`). Wallpaper, crown molding, a wooden floor (a plane cut to a wedge) with a rug, and a pendant
   lamp with a warm glow make it read as a library. Shelves are padded with unlabelled empty ones up to 6.
@@ -99,16 +95,18 @@ highlights: [{ id, page, text, rects: [{x,y,w,h}], color, note, createdAt, updat
 spine colour). All are AI-generated, tileable or flat, no text. The original PNGs are not kept in the project (large); re-generate with
 similar prompts if they need changing. A bookcase is `.cabinet-frame` (wood) > `.cabinet-inner` (dark panelled back) > shelves.
 
-## 3D bookcases
-- Everything below `.cabinet` is real CSS 3D (`transform-style: preserve-3d`). A case is a box: `.cabinet-frame::after` is a hollow wood ring
-  (masked), `.cab-back` / `.cab-left` / `.cab-right` / `.cab-top` are the inside faces (depth `--D`), each shelf `.plank` has a top surface
-  (`::before`, rotateX) and each book is a box: `.body` > `.spine` (front) + `.side-l` / `.side-r` / `.top` (depth `--bd`).
-- **Do not put `filter`, `opacity`, `overflow` or `mask` on elements in that chain**: the browser flattens the 3D (that is why the book
-  shadows and plank brightness are done with gradients, not `filter`). Opacity inside the intro animation is fine because it ends.
-- In the hero a case is pushed `translateZ(--D)` so its back sits on the wall; the cases keep `--D` away from the corner so they do not
-  collide, and the shelf names are pushed back onto the wall plane.
-- Hover/focus pulls a book out towards you (`translate3d(0, -3px, 0.42 * --D)`). In the library page the same classes work, with the
-  `.cabinets` perspective.
+## Photographed bookcases
+- `images/case.webp` is an AI-generated (Higgsfield) photo of an empty carved walnut bookcase, cut out with alpha (880 x 1168). It has 5 usable
+  shelves (the arched top plus four more); the short bottom one is unused. Their floors and heights are measured in photo "units" in
+  `Library.SLOTS` (and `CASE`, `ROW_CAP`). If you replace the photo, re-measure those numbers.
+- `Library._slotsFor` turns folders into slots (one per row of books; a full folder takes several slots), `_pcase` builds one case (the photo +
+  `.pslot` per shelf), 5 shelves per case, more folders mean more cases. The library page shows all cases; the hero shows the first two.
+- Books are real 3D boxes standing in front of the photo: sizes are unitless numbers in photo units, `--u` (px per unit) is set per case from
+  its width, so everything scales with the case. Do not put `filter`, `opacity`, `overflow` or `mask` on elements between the wall and a book:
+  the browser would flatten the 3D (book shadows etc. are gradients).
+- Hover/focus pulls a book out towards you (`translate3d(0, -3px, 0.42 * --D)`).
+- Old CSS for the earlier CSS-drawn cases (`.cabinet*`, `.cab-*`, `.plank`, `.shelf-row`, `.cabinets`, textures `wood.webp`) is unused now and can be
+  deleted in a cleanup.
 
 ## Natural shelves
 - Only real articles are on the shelves (no decorative filler books; an empty folder is an empty shelf, on purpose).
@@ -116,8 +114,7 @@ similar prompts if they need changing. A bookcase is `.cabinet-frame` (wood) > `
   leaning back on the others (`.lean-l`, 13 to 21 degrees), now and then one leaning on its neighbour (`.lean-r`), and in rows of 4+ books a
   short **stack lying flat** at the end (`li.stack` > `.book.flat`, spine text horizontal, small offsets and tilts).
   Leaning is `rotate(--lean)` on `.body` with the pivot at the bottom corner, plus a margin of `height * sin(lean)` so it does not overlap.
-- Row capacity: books count `width + 6 + 3` px each; in the hero the width is `(inner - 130k - 4) / (.75 + .3k)`. If books stick out of a case, check that.
-- The case has fluted pilasters / dentil cornice (grooves in the frame ring), carved caps (`.cab-cap`) and a plinth (`.cab-plinth`).
+- Row capacity: `ROW_CAP` (547 units); each book counts its width + 5.
 - `Library._palette` holds the vintage spine colours.
 
 ## How things work

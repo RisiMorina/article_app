@@ -78,32 +78,26 @@ const Library = {
   /** Redraw whichever screen is showing (start screen hero or library). */
   _refreshView() { if (!$('#view-welcome').hidden) this.renderHero(); else this.render(); },
 
-  /** The start screen's first screen: a library room. Two walls of bookcases meet at a 90 degree corner (real CSS 3D). */
+  /** The start screen's first screen: a library room. Two photographed bookcases stand in a 90 degree corner (CSS 3D). */
   renderHero() {
     const shelves = this._cases('', 'all');
-    while (shelves.length < 6) shelves.push({ title: '', blank: true, books: [] });
-    const half = Math.ceil(shelves.length / 2);
+    const slots = this._slotsFor(shelves);
+    const per = this.SLOTS.length;
     const box = $('#hero-shelves');
-    const WALL = 700, GUTTER = 112;                      // wall plane width (px, before scaling) and label gutter
-    const inner = WALL - GUTTER - 68;
-    // Books shrink so about three shelves per wall fit the screen; the whole room scales down on narrow windows.
     const vh = window.innerHeight, vw = window.innerWidth;
-    const k = Math.min(Math.max(((vh - 130 - 120 - 40) / Math.max(half, 1) - 44) / 221, 0.8), 1);
-    const scale = Math.min(1, vw / 1180);
-    const bw = 0.75 + k * 0.3;                              // book width factor used by the hero CSS
-    box.style.setProperty('--k', k.toFixed(3));
-    box.style.setProperty('--rs', scale.toFixed(3));
+    const PW = 560;                                        // photo width in px before the room is scaled to fit
     box.classList.toggle('intro', !this._heroShown);
     this._heroShown = true;
-    const left = h('div', { class: 'wall left' }, this._cabinet(shelves.slice(0, half), (inner - 130 * k - 4) / bw, 'left'));
-    const right = h('div', { class: 'wall right' }, this._cabinet(shelves.slice(half), (inner - 130 * k - 4) / bw, 'right'));
+    // The hero shows the first two cases; the library page shows all of them.
+    const left = h('div', { class: 'wall left' }, this._pcase(slots.slice(0, per), 'left', PW));
+    const right = h('div', { class: 'wall right' }, this._pcase(slots.slice(per, per * 2), 'right', PW));
     box.replaceChildren(h('div', { class: 'stage' },
       h('div', { class: 'floor', 'aria-hidden': 'true' }, h('div', { class: 'rug' })),
       left, right));
     $$('.book', box).forEach((b, i) => b.style.setProperty('--i', i));
-    // Fit the whole room on the first screen (the outer edges come closer in perspective, so leave 25% room).
-    const sh = $('.stage', box).offsetHeight || 700;
-    box.style.setProperty('--rs', Math.min(1, vw / 1250, (vh - 40) / (sh * 1.5)).toFixed(3));
+    // Fit the whole room on the first screen (the outer edges come closer in perspective, so leave 50% room).
+    const sh = $('.stage', box).offsetHeight || 900;
+    box.style.setProperty('--rs', Math.min(1, vw / 1250, (vh - 40) / (sh * 1.3)).toFixed(3));
   },
 
   /** Flat tooltip for hero books (the cabinets are tilted in 3D, so a card inside them would be skewed). */
@@ -197,22 +191,21 @@ const Library = {
     this.renderNav();
     const q = this.query.trim().toLowerCase();
     const inView = this.articles.filter(a => this._inView(a));
-    const shelves = this._cases(q);
-    const shownCount = shelves.reduce((n, c) => n + c.books.length, 0);
+    const cases = this._cases(q);
+    const shownCount = cases.reduce((n, c) => n + c.books.length, 0);
 
     $('#lib-view-title').textContent = this._viewTitle();
     $('#folder-tools').hidden = !this.filter.startsWith('folder:');
 
-    // One bookcase holds every shelf. With many folders it becomes two cases standing in a corner.
+    // Every folder is a shelf of a photographed bookcase (5 shelves per case); more folders mean more cases.
     const W = $('#shelves').clientWidth || 760;
-    const GUTTER = 128, FRAME = 28 + 32 + 8;
-    const two = shelves.length >= 7;
-    const groups = two ? [shelves.slice(0, Math.ceil(shelves.length / 2)), shelves.slice(Math.ceil(shelves.length / 2))] : [shelves];
-    const colW = two ? (W - 2 * GUTTER - 28) / 2 : W - GUTTER;
-    const inner = Math.max(colW - FRAME, 180);
+    const pw = Math.max(Math.min(640, W - 140), 300);
+    const slots = this._slotsFor(cases);
+    const groups = [];
+    for (let i = 0; i < slots.length; i += this.SLOTS.length) groups.push(slots.slice(i, i + this.SLOTS.length));
     const box = $('#shelves');
-    box.className = 'shelves cabinets' + (two ? ' two' : '');
-    box.replaceChildren(...groups.map((g, i) => this._cabinet(g, inner, two ? (i ? 'right' : 'left') : 'left')));
+    box.className = 'shelves';
+    box.replaceChildren(...groups.map(g => this._pcase(g, 'left', pw)));
 
     const empty = $('#lib-empty');
     empty.hidden = shownCount > 0 || (!q && this.filter !== 'toread' && !!this.articles.length);
@@ -227,43 +220,58 @@ const Library = {
       : '';
   },
 
-  /* ---------- bookcase ---------- */
+  /* ---------- bookcases (a photo of an empty case; the books are real 3D boxes standing on its shelves) ---------- */
   _hash(s) { let n = 0; for (let i = 0; i < s.length; i++) n = (n * 31 + s.charCodeAt(i)) >>> 0; return n; },
 
-  _cabinet(shelves, width, side) {
-    return h('div', { class: 'cabinet ' + side },
-      h('div', { class: 'cabinet-frame' },
-        h('span', { class: 'cab-cap cap-l', 'aria-hidden': 'true' }), h('span', { class: 'cab-cap cap-r', 'aria-hidden': 'true' }), h('span', { class: 'cab-plinth', 'aria-hidden': 'true' }),
-        h('div', { class: 'cabinet-inner' },
-        h('span', { class: 'cab-face cab-back', 'aria-hidden': 'true' }), h('span', { class: 'cab-face cab-top', 'aria-hidden': 'true' }),
-        h('span', { class: 'cab-face cab-side cab-left', 'aria-hidden': 'true' }), h('span', { class: 'cab-face cab-side cab-right', 'aria-hidden': 'true' }),
-        ...shelves.map(s => this._shelf(s, width, side)))));
+  // The case photo is 880 x 1168 "units". Shelf floors and compartment heights were measured on images/case.webp.
+  SLOTS: [{ floor: 305, h: 175 }, { floor: 473, h: 140 }, { floor: 637, h: 147 }, { floor: 800, h: 143 }, { floor: 958, h: 130 }],
+  CASE: { w: 880, h: 1168, left: 160, inner: 557 },
+  ROW_CAP: 547,                                  // usable width of one shelf, in units
+
+  /** Turn shelves (folders) into slots, one per row of books. A full folder takes several slots. */
+  _slotsFor(cases) {
+    const out = [];
+    for (const c of cases) {
+      const rows = [[]];
+      let used = 0;
+      for (const a of c.books) {
+        const w = this._bookWidth(a) + 5;
+        if (used + w > this.ROW_CAP && rows.at(-1).length) { rows.push([]); used = 0; }
+        rows.at(-1).push(a);
+        used += w;
+      }
+      rows.forEach((r, i) => out.push({ title: i === 0 ? c.title : '', folder: c.folder, count: c.books.length, row: r, first: i === 0, key: c.title + ':' + i }));
+    }
+    return out;
   },
 
-  /** One shelf = one folder, labelled beside the bookcase. Books wrap onto an extra board when a row is full. */
-  _shelf(c, width, side) {
-    const rows = [[]];
-    let used = 0;
-    for (const a of c.books) {
-      const w = this._bookWidth(a) + 6;
-      if (used + w > width && rows.at(-1).length) { rows.push([]); used = 0; }
-      rows.at(-1).push({ a, x: used });
-      used += w + 3;
-    }
-    const droppable = c.folder !== undefined;
-    const label = !c.title ? null : h('div', { class: 'shelf-label' },
+  /** One bookcase: the photo, and one slot per shelf with its label and its books. */
+  _pcase(slots, side, pw) {
+    const C = this.CASE;
+    const padded = slots.slice();
+    while (padded.length < this.SLOTS.length) padded.push({ blank: true, row: [], key: 'blank' + padded.length });
+    return h('div', { class: 'pcase ' + side, style: { '--pw': pw + 'px', '--u': (pw / C.w) + 'px' } },
+      h('img', { class: 'pcase-img', src: 'images/case.webp', alt: '', draggable: 'false' }),
+      ...padded.map((s, i) => this._pslot(s, i, side)));
+  },
+
+  _pslot(s, i, side) {
+    const C = this.CASE, g = this.SLOTS[i];
+    const droppable = s.folder !== undefined && !s.blank;
+    const label = !s.title ? null : h('div', { class: 'shelf-label' },
       h('button', {
-        type: 'button', class: 'case-name', text: c.title, title: 'Show only this shelf',
-        onclick: () => { this.filter = c.title === 'Reading list' && c.folder === undefined ? 'toread' : c.folder ? 'folder:' + c.folder : this.folders.length ? 'unsorted' : 'all'; this.render(); }
+        type: 'button', class: 'case-name', text: s.title, title: 'Show only this shelf',
+        onclick: () => { this.filter = s.title === 'Reading list' && s.folder === undefined ? 'toread' : s.folder ? 'folder:' + s.folder : this.folders.length ? 'unsorted' : 'all'; this.render(); }
       }),
-      h('span', { class: 'case-n', text: `${c.books.length} ${c.books.length === 1 ? 'book' : 'books'}` }));
-    const el = h('div', { class: 'shelf' },
-      ...rows.map((r, i) => h('div', { class: 'shelf-row' + (c.books.length ? '' : ' is-empty') },
-        i === 0 ? label : null,
-        h('ul', { class: 'books' },
-          ...this._rowItems(r, width, c, i, side),
-          !c.books.length && !c.blank ? h('li', { class: 'shelf-empty', text: droppable ? 'Empty. Drag a book here.' : 'Nothing here yet.' }) : null),
-        h('div', { class: 'plank', 'aria-hidden': 'true' }))));
+      h('span', { class: 'case-n', text: `${s.count} ${s.count === 1 ? 'book' : 'books'}` }));
+    const empty = !s.blank && s.first && !s.count;
+    const el = h('div', {
+      class: 'pslot', style: { bottom: ((C.h - g.floor) / C.h * 100) + '%', height: (g.h / C.h * 100) + '%' }
+    },
+      label,
+      h('ul', { class: 'books', style: { left: (C.left / C.w * 100) + '%', width: (C.inner / C.w * 100) + '%' } },
+        ...this._rowItems(s.row, s.key, side),
+        empty ? h('li', { class: 'shelf-empty', text: droppable ? 'Empty. Drag a book here.' : 'Nothing here yet.' }) : null));
     if (droppable) {
       el.addEventListener('dragover', e => {
         if (!Array.from(e.dataTransfer.types || []).includes('text/x-article')) return;
@@ -276,42 +284,40 @@ const Library = {
         const a = this.articles.find(x => x.id === id);
         if (!a) return;
         e.preventDefault();
-        if ((a.folder || '') !== c.folder) this.moveTo(a, c.folder);
+        if ((a.folder || '') !== s.folder) this.moveTo(a, s.folder);
       });
     }
     return el;
   },
 
-  /** One row of a shelf, arranged like a real one: mostly standing, the odd book leaning on its neighbour, and a short stack
-      lying flat at the end. Everything is decided from a hash of the ids, so it looks the same on every visit. */
-  _rowItems(row, width, c, rowIndex, side) {
-    const books = row.map(r => r.a);
+  /** One row, arranged like a real shelf: mostly standing, the odd book leaning on its neighbour, and a short stack lying
+      flat at the end. Decided from a hash of the ids, so it looks the same on every visit. */
+  _rowItems(books, key, side) {
     const n = books.length;
-    const seed = this._hash(c.title + ':' + rowIndex + ':' + n);
+    const seed = this._hash(key + ':' + n);
     let stack = [];
     let standing = books;
     if (n >= 4 && seed % 2 === 0) { const k = Math.min(3, n - 2); standing = books.slice(0, n - k); stack = books.slice(n - k); }
     const items = standing.map((a, i) => {
       const hh = this._hash(a.id + 'lean');
-      const last = i === standing.length - 1;
       let deg = 0;
-      if (last && standing.length > 1 && !stack.length) deg = -(13 + hh % 9);            // the last book leans back on the others
-      else if (i < standing.length - 1 && hh % 6 === 0) deg = 7 + (hh >>> 4) % 9;         // now and then one leans on the next book
-      return this._book(a, side === 'right' || row[i].x > width / 2, { lean: deg });
+      if (i === standing.length - 1 && standing.length > 1 && !stack.length) deg = -(13 + hh % 9);
+      else if (i < standing.length - 1 && hh % 6 === 0) deg = 7 + (hh >>> 4) % 9;
+      return this._book(a, side === 'right', { lean: deg });
     });
     if (stack.length) {
-      items.push(h('li', { class: 'stack' }, ...stack.map((a, i) => {
+      items.push(h('li', { class: 'stack' }, ...stack.map(a => {
         const hh = this._hash(a.id + 'flat');
-        const len = 150 + hh % 50, thick = Math.max(20, Math.round(this._bookWidth(a) * 0.62));
-        return this._book(a, side === 'right', { flat: true, len, thick, off: (hh >>> 6) % 9, tilt: ((hh >>> 3) % 5 - 2) * 0.5 });
+        const len = 112 + hh % 30, thick = Math.max(16, Math.round(this._bookWidth(a) * 0.6));
+        return this._book(a, side === 'right', { flat: true, len, thick, off: (hh >>> 6) % 6, tilt: ((hh >>> 3) % 5 - 2) * 0.5 });
       })));
     }
     return items;
   },
 
-  // Thicker books for longer articles, a little height variety so a shelf looks lived in.
-  _bookWidth(a) { return Math.round(Math.min(Math.max(34 + (a.numPages || 8) * 1.2, 38), 72)); },
-  _bookHeight(a) { return 176 + (this._hash(a.id) % 6) * 9; },
+  // Book sizes are in case-photo units (see CASE): thicker for longer articles, a little height variety.
+  _bookWidth(a) { return Math.round(Math.min(Math.max(22 + (a.numPages || 8) * 0.4, 25), 52)); },
+  _bookHeight(a) { return 108 + (this._hash(a.id) % 5) * 6; },
   _palette: [
     ['#6b2530', '#f0dca4'], ['#2f4a36', '#f0dca4'], ['#26364f', '#f0dca4'], ['#5a3a24', '#f0dca4'], ['#a7782c', '#2b1d08'],
     ['#2f5b5c', '#f0dca4'], ['#512f4c', '#f0dca4'], ['#b79b6c', '#2b2210'], ['#575a2b', '#f0dca4'], ['#3c4d66', '#f0dca4'],
@@ -334,9 +340,9 @@ const Library = {
     select.value = a.folder || '';
     const href = '#/article/' + encodeURIComponent(a.id);
     const lean = opt.lean || 0;
-    const style = { '--bw': (opt.flat ? opt.len : this._bookWidth(a)) + 'px', '--bh': (opt.flat ? opt.thick : this._bookHeight(a)) + 'px', '--bg': bg, '--fg': fg };
+    const style = { '--bw': opt.flat ? opt.len : this._bookWidth(a), '--bh': opt.flat ? opt.thick : this._bookHeight(a), '--bg': bg, '--fg': fg };
     if (lean) { style['--lean'] = lean + 'deg'; style['--ls'] = Math.abs(Math.sin(lean * Math.PI / 180)).toFixed(3); }
-    if (opt.flat) { style['--off'] = opt.off + 'px'; style['--tilt'] = opt.tilt + 'deg'; }
+    if (opt.flat) { style['--off'] = opt.off; style['--tilt'] = opt.tilt + 'deg'; }
     const li = h(opt.flat ? 'div' : 'li', {
       class: 'book' + (a.toRead ? ' toread' : '') + (alignRight ? ' card-right' : '') + (opt.flat ? ' flat' : '') + (lean < 0 ? ' lean-l' : lean > 0 ? ' lean-r' : ''),
       dataset: { id: a.id, title, sub }, draggable: 'true', style

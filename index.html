@@ -110,6 +110,17 @@
       <h1 id="r-title" class="r-title"></h1>
 
       <div class="r-tools">
+        <div class="group" id="tool-group" role="group" aria-label="Tools">
+          <button type="button" class="icon-btn" data-tool="select" aria-pressed="true" aria-label="Select text" title="Select text (V)"><span data-icon="cursor"></span></button>
+          <button type="button" class="icon-btn" data-tool="pen" aria-pressed="false" aria-label="Pen" title="Pen: circle or underline (P)"><span data-icon="pen"></span></button>
+          <button type="button" class="icon-btn" data-tool="eraser" aria-pressed="false" aria-label="Eraser" title="Eraser: drag over a drawing to remove it (E)"><span data-icon="eraser"></span></button>
+        </div>
+        <div class="group ink-colors" id="ink-colors" role="group" aria-label="Pen colour" hidden>
+          <button type="button" class="ink-dot" data-ink-color="red" style="--ink:#d93025" aria-label="Red" title="Red"></button>
+          <button type="button" class="ink-dot" data-ink-color="blue" style="--ink:#1a56db" aria-label="Blue" title="Blue"></button>
+          <button type="button" class="ink-dot" data-ink-color="green" style="--ink:#188038" aria-label="Green" title="Green"></button>
+          <button type="button" class="ink-dot" data-ink-color="black" style="--ink:#1d2329" aria-label="Black" title="Black"></button>
+        </div>
         <div class="group" role="group" aria-label="Zoom">
           <button type="button" class="icon-btn" id="zoom-out" aria-label="Zoom out" title="Zoom out"><span data-icon="minus"></span></button>
           <button type="button" class="zoom-level" id="zoom-level" aria-label="Fit page to width" title="Fit page to width">100%</button>
@@ -268,6 +279,7 @@
 <script src="js/library.js"></script>
 <script src="js/reader.js"></script>
 <script src="js/highlighter.js"></script>
+<script src="js/ink.js"></script>
 <script src="js/notes.js"></script>
 <script src="js/exporter.js"></script>
 <script src="js/app.js"></script>

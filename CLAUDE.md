@@ -17,6 +17,7 @@ js/settings.js    colour names (stored in IndexedDB, travel with backups) and th
 js/library.js     start screen + library: reading list, folders, list, search, upload (button / drop zone / whole-window drop), delete
 js/reader.js      PDF.js loading, lazy page rendering, text layer, zoom, page counter, highlight overlay layer
 js/highlighter.js selection -> highlights, floating toolbar, Ctrl/Cmd+H, click on a highlight
+js/ink.js         pen + stroke eraser: one SVG layer per page, strokes in `article.ink`
 js/notes.js       sidebar: Highlights tab, About tab, questions, tabs, resizable/collapsible panel
 js/exporter.js    Markdown + HTML of one article, clipboard, print, full JSON backup and import
 js/app.js         hash router and start-up
@@ -62,6 +63,15 @@ highlights: [{ id, page, text, rects: [{x,y,w,h}], color, note, createdAt, updat
   folder that is open. Only the start screen's "Choose a PDF" with one file still opens the reader straight away.
 - Each row has a folder select (with "New folder…") and a "To read" toggle. Folders are created/renamed/deleted in the
   library; deleting a folder keeps its articles (they become "No folder"). Names are unique, case-insensitive.
+
+## Pen and eraser
+- Reader header has Select / Pen / Eraser buttons (keys V, P, E; Esc goes back to Select) and four pen colours.
+  Ctrl+Z takes back the last stroke drawn in this session while Pen or Eraser is active.
+- `article.ink = [{ id, page, color: red|blue|green|black, width, pts: [[x, y], ...] }]`. x and y are fractions of the
+  page width/height, width is a fraction of the page width (so zoom just scales it). Drawn as SVG paths in a layer
+  above the text layer; with Pen or Eraser active that layer takes the pointer and the text layer is disabled.
+- The eraser removes whole strokes it touches. Ink is saved with the article and travels in backups, but it is not
+  part of the Markdown/HTML/print export (notes only).
 
 ## How things work
 - Pages are placeholders sized from the real page sizes. An IntersectionObserver renders canvas + text layer

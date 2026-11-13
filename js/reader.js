@@ -94,6 +94,7 @@ const Reader = {
     if (this.pdf) { this.pdf.destroy(); this.pdf = null; }
     this.pagesEl.replaceChildren();
     Highlighter.hideToolbar();
+    Ink.reset();
     this.activeId = null;
     Autosave.unbind();
     this.article = null;
@@ -115,14 +116,16 @@ const Reader = {
       const canvas = h('canvas', { class: 'page-canvas' });
       const hlEl = h('div', { class: 'hl-layer' });
       const textEl = h('div', { class: 'textLayer' });
-      const el = h('div', { class: 'page', dataset: { num }, 'aria-label': `Page ${num}`, role: 'group' }, canvas, hlEl, textEl);
+      const inkEl = Ink.createLayer();
+      const el = h('div', { class: 'page', dataset: { num }, 'aria-label': `Page ${num}`, role: 'group' }, canvas, hlEl, textEl, inkEl);
       frag.append(el);
-      const page = { num, w: s.w, h: s.h, proxy: s.proxy, el, canvas, hlEl, textEl, rendered: false, token: 0, task: null };
+      const page = { num, w: s.w, h: s.h, proxy: s.proxy, el, canvas, hlEl, textEl, inkEl, rendered: false, token: 0, task: null };
       this._bindTextLayer(page);
+      Ink.bindPage(page);
       return page;
     });
     this.pagesEl.replaceChildren(frag);
-    this.pages.forEach(p => this.refreshHighlightLayer(p.num));
+    this.pages.forEach(p => { this.refreshHighlightLayer(p.num); Ink.refresh(p.num); });
   },
 
   /** Mirrors what pdf.js's own viewer does so dragging a selection across gaps doesn't jump. */

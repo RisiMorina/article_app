@@ -168,7 +168,7 @@ const Highlighter = {
     });
 
     document.addEventListener('mouseup', e => {
-      if (!Reader.article || $('#view-reader').hidden || tb.contains(e.target)) return;
+      if (!Reader.article || $('#view-reader').hidden || tb.contains(e.target) || Ink.tool !== 'select') return;
       // wait one tick: the browser finalises the selection after mouseup
       setTimeout(() => {
         const range = this.selectionRange();

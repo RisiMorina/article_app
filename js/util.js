@@ -72,7 +72,10 @@ const ICONS = {
   'trash': '<path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m3 0-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>',
   'sliders': '<path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/>',
   'panel-right': '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/>',
-  'bookmark': '<path d="M6 4h12v17l-6-4-6 4z"/>',
+  'cursor': '<path d="M5 3l14 7-6 2-2 6z"/>',
+  'pen': '<path d="M4 20l1-4L16 5l3 3L8 19zM14 7l3 3"/>',
+  'eraser': '<path d="M9 20h11M4.5 14.5l9-9 5 5-7.5 7.5H8z"/>',
+  'bookmark':'<path d="M6 4h12v17l-6-4-6 4z"/>',
   'folder': '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
   'inbox': '<path d="M4 13h4l1 3h6l1-3h4M4 13l2-8h12l2 8v6H4z"/>',
   'jump':'<path d="M7 17 17 7M8 7h9v9"/>'

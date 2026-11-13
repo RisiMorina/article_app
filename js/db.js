@@ -85,6 +85,7 @@ function newArticle(fileName, numPages) {
     freeNotes: '',
     questions: [],                 // { id, text, highlightId|null }
     thumb: null,                   // small JPEG data URL of page 1 (library + welcome card)
+    ink: [],                       // pen strokes: { id, page, color, width, pts[[x,y]] }, see js/ink.js
     highlights: []                 // { id, page, text, rects[{x,y,w,h}], color, note, createdAt, updatedAt }
   };
 }

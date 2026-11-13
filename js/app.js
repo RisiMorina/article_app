@@ -27,6 +27,7 @@ const App = {
     Library.init();
     Reader.init();
     Highlighter.init();
+    Ink.init();
     Notes.init();
     Exporter.init();
 

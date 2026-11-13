@@ -117,7 +117,8 @@ const Library = {
       if (!isFinite(f) || f >= 1) break;
       rs *= f * 0.98;
     }
-    if (real.length <= 1) this.zoomTo($('.pslot', box), { instant: true, locked: true });
+    // One shelf of books: open zoomed on it. An empty library just shows the case (zooming on an empty shelf looks odd).
+    if (real.length === 1 && real[0].count) this.zoomTo($('.pslot', box), { instant: true, locked: true });
   },
 
   /** Click a shelf in the hero: turn the room so that wall faces you and zoom in on the shelf. */
@@ -134,7 +135,9 @@ const Library = {
     stage.style.transform = `scale(${rs}) rotateY(${a}deg)`;
     const q = books.getBoundingClientRect(), Q = { x: q.left + q.width / 2, y: q.top + q.height / 2 };
     const hr = hero.getBoundingClientRect(), C = { x: hr.left + hr.width / 2, y: hr.top + hr.height / 2 };
-    const k = Math.min(Math.max(Math.min(hr.width * 0.62, 1100) / Math.max(q.width, 1), 1), 6);
+    // Never blow the photos up past their own resolution (880 px wide, shown PW px wide at scale rs), or the shelf turns blurry.
+    const kSharp = 880 * 1.1 / (560 * rs * (window.devicePixelRatio || 1));
+    const k = Math.min(Math.max(Math.min(hr.width * 0.62, 1100) / Math.max(q.width, 1), 1), 6, Math.max(kSharp, 1));
     const tx = C.x - O.x - k * (Q.x - O.x), ty = C.y - O.y - k * (Q.y - O.y);
     stage.style.transform = `scale(${rs})`;
     void stage.offsetWidth;                           // start the animation from the room view

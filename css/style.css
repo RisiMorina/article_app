@@ -698,7 +698,7 @@ body.resizing .r-body { transition: none; }
 .hero-room .case-name:hover { color: #ffd98f; }
 .hero-room .case-n { color: #bfb39c; }
 .hero-room .shelf-label::after { background: #8c7c62; }
-.hero-room .shelf-empty { color: #9a8f7b; }
+.hero-room .shelf-empty { display: none; }   /* no drag-and-drop in the hero; an empty shelf just stays empty */
 .hero-room .shelf-row { padding-top: 26px; }
 .hero-room .shelf-row.is-empty { padding-top: 10px; }
 .hero-room .books { min-height: calc(176px * var(--k)); }

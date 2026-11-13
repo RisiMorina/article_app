@@ -117,8 +117,8 @@ const Library = {
       if (!isFinite(f) || f >= 1) break;
       rs *= f * 0.98;
     }
-    // One shelf of books: open zoomed on it. An empty library just shows the case (zooming on an empty shelf looks odd).
-    if (real.length === 1 && real[0].count) this.zoomTo($('.pslot', box), { instant: true, locked: true });
+    // One shelf (empty or one row of books): open zoomed on it, as close as the photo stays sharp.
+    if (real.length <= 1) this.zoomTo($('.pslot', box), { instant: true, locked: true });
   },
 
   /** Click a shelf in the hero: turn the room so that wall faces you and zoom in on the shelf. */

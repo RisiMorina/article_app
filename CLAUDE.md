@@ -96,6 +96,9 @@ highlights: [{ id, page, text, rects: [{x,y,w,h}], color, note, createdAt, updat
   that rotation, then animates `translate + scale + rotateY` on `.stage` (about 1s, instant with reduced motion). A "Back to the room" button,
   Esc, or a click outside the shelf zooms out (`zoomOut`). Clicking a book still opens its article. The click handler is delegated on
   `#hero-shelves`; in the library page the brass plate still filters to that folder instead.
+- **The room**: walls are tall (230 px of wallpaper above the cases) and extend 900 px past the cases at the outer ends, with crown molding (`.wall::before`),
+  a panelled wainscot (`.dado`) and a baseboard, all CSS. The **ceiling** (`.ceiling`) is a plane at the top of the walls cut to the same 90 degree
+  wedge as the floor, with dark beams and plaster panels. `renderHero` leaves `150 * rs` px above the cases for the wall and ceiling when fitting.
 - Because the walls are tilted, hover cards inside them would be skewed: in the hero the books show a flat tooltip (`#hero-tip`,
   `Library.initHeroTip`) instead. Full actions (To read, move, delete) live in the library.
 - Below it (`#welcome-more`) is the old start content: heading, Choose a PDF / Open my library / Reading list, Continue card.

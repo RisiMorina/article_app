@@ -92,22 +92,24 @@ const Library = {
     // Each wall is a run of bays: two per wall on wide screens, one on narrow ones. The hero shows the first cases; the library page shows all.
     const bays = vw >= 1500 ? 2 : 1;
     const mk = (from, side) => h('div', { class: 'wall ' + side },
+      h('span', { class: 'dado', 'aria-hidden': 'true' }), h('span', { class: 'baseboard', 'aria-hidden': 'true' }),
       h('div', { class: 'run' }, ...Array.from({ length: bays }, (_, i) => this._pcase(slots.slice((from + i) * per, (from + i + 1) * per), side, PW))));
     const left = mk(0, 'left'), right = mk(bays, 'right');
     box.replaceChildren(h('div', { class: 'stage' },
+      h('div', { class: 'ceiling', 'aria-hidden': 'true' }),
       h('div', { class: 'floor', 'aria-hidden': 'true' }, h('div', { class: 'rug' })),
       left, right));
     $$('.book', box).forEach((b, i) => b.style.setProperty('--i', i));
     // Fit the cases on the first screen. Perspective makes the near parts bigger, so measure the real, projected size and shrink until it fits.
     const sh = $('.stage', box).offsetHeight || 900;
-    let rs = Math.min(1, (vh - 40) / (sh * 1.5));
+    let rs = Math.min(1, (vh - 40) / (sh * 1.25));
     const hero = box.closest('.hero');
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 6; i++) {
       box.style.setProperty('--rs', rs.toFixed(3));
       const hr = hero.getBoundingClientRect();
       let top = Infinity, bottom = -Infinity, lft = Infinity, rgt = -Infinity;
       $$('.pcase-front', box).forEach(el => { const r = el.getBoundingClientRect(); top = Math.min(top, r.top); bottom = Math.max(bottom, r.bottom); lft = Math.min(lft, r.left); rgt = Math.max(rgt, r.right); });
-      const roomH = hr.height - 110, roomW = hr.width - 80;      // leave space for the lamp above, the chevron below and a margin at the sides
+      const roomH = hr.height - 80 - 150 * rs, roomW = hr.width - 80;      // leave space for the lamp above, the chevron below and a margin at the sides
       const f = Math.min(roomH / (bottom - top), roomW / (rgt - lft));
       if (!isFinite(f) || f >= 1) break;
       rs *= f * 0.98;

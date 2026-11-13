@@ -82,9 +82,14 @@ highlights: [{ id, page, text, rects: [{x,y,w,h}], color, note, createdAt, updat
   perspective on `.hero-room`). Wallpaper, crown molding, a wooden floor (a plane cut to a wedge) with a rug, and a pendant
   lamp with a warm glow make it read as a library. Shelves are padded with unlabelled empty ones up to 6.
   `Library.renderHero` scales books (`--k`) and the whole room (`--rs`) so it fits the screen. A small chevron scrolls down.
-- The two cases are 150 units deep and each keeps that distance from the corner (`.hero-room .wall.left .pcase { margin-right: var(--cd) }`), so they
-  do not run into each other. `renderHero` fits the room by **measuring** the projected size of `.pcase-front` and shrinking `--rs` until it fits
-  between the lamp and the chevron (perspective makes the near parts bigger than a formula predicts). Test at wide, short windows like 1850x880.
+- Each wall is a **run of bays** (`.run`): two bays per wall when the window is 1500px or wider, one otherwise (`renderHero`, `bays`), so the
+  hero shows 2 or 4 cases and the library page shows all. Neighbouring bays overlap by 112 units (shared side posts) and the last bay on each
+  wall stops 92 units short of the corner, so the front frames meet exactly on the 45 degree mitre line. The side panels that would face a
+  neighbour or the corner are hidden (`.cs-or` / `.cs-ol` rules under `.wall`).
+- Shelf names are brass plates on the front edge of each board (`.shelf-label`, `top: 100%` of the slot, `translateZ(3px)` so it is in front of
+  the frame photo), in the hero and the library page alike.
+- `renderHero` fits the room by **measuring** the projected height and width of all `.pcase-front` images and shrinking `--rs` until they fit
+  (perspective makes the near parts bigger than a formula predicts). Test at wide, short windows like 1850x880 and at 1440x900.
 - Because the walls are tilted, hover cards inside them would be skewed: in the hero the books show a flat tooltip (`#hero-tip`,
   `Library.initHeroTip`) instead. Full actions (To read, move, delete) live in the library.
 - Below it (`#welcome-more`) is the old start content: heading, Choose a PDF / Open my library / Reading list, Continue card.

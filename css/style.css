@@ -609,7 +609,7 @@ body.resizing .r-body { transition: none; }
 .accent-opt:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
 
 /* =========================================================
-   Start screen: the first screen is only the bookcases, the rest is below
+   Start screen: the first screen is a library room, the rest is below
    ========================================================= */
 .welcome { display: block; min-height: 0; padding: 0; }
 .welcome-more {
@@ -617,29 +617,84 @@ body.resizing .r-body { transition: none; }
   gap: clamp(48px, 8vw, 110px); align-items: center; justify-content: center; padding: 48px;
 }
 @media (max-width: 1180px) { .welcome-more { grid-template-columns: minmax(0, 520px) 240px; } }
+
 .hero {
-  position: relative; display: flex; align-items: center; justify-content: center;
-  height: 100vh; height: 100svh; min-height: 520px; padding: 28px 0 56px;
+  position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden;
+  height: 100vh; height: 100svh; min-height: 560px; padding: 0 0 36px;
+  /* the room: deep green wallpaper with a faint stripe, darker toward the edges */
+  background:
+    radial-gradient(120% 90% at 50% 40%, transparent 40%, rgb(0 0 0 / .55) 100%),
+    repeating-linear-gradient(90deg, #243d37 0 46px, #28443d 46px 48px);
 }
-.hero-shelves { --k: .8; width: 100%; max-width: 1500px; margin: 0 auto; --gutter: 112px; }
-.hero-shelves.cabinets.two { margin: 0 auto; padding: 0 var(--gutter); }
-.hero-shelves .cabinet:hover, .hero-shelves .cabinet:focus-within { position: relative; z-index: 5; }
-.hero-shelves .shelf-row { padding-top: 26px; }
-.hero-shelves .shelf-row.is-empty { padding-top: 10px; }
-.hero-shelves .books { min-height: calc(176px * var(--k)); }
-.hero-shelves .is-empty .books { min-height: calc(120px * var(--k)); }
-.hero-shelves .book { height: calc(var(--bh) * var(--k)); width: calc(var(--bw) * (.75 + var(--k) * .3)); }
-.hero-shelves .spine-title { font-size: 12.5px; }
-/* the top shelf has no room above it for the card, so it opens below the book */
-.hero-shelves .shelf:first-child .book-card { bottom: auto; top: calc(100% + 12px); }
-.hero-shelves .shelf:first-child .book-card::after { top: auto; bottom: 100%; }
+.hero-light { position: absolute; inset: 0; pointer-events: none; z-index: 2; background: radial-gradient(520px 420px at 50% 22%, rgb(255 205 130 / .26), transparent 70%); mix-blend-mode: screen; }
+.hero-lamp { position: absolute; top: 0; left: 50%; z-index: 3; width: 0; pointer-events: none; }
+.hero-lamp .cord { position: absolute; left: -1px; top: 0; width: 2px; height: 46px; background: #0e1412; }
+.hero-lamp .dome { position: absolute; left: -34px; top: 44px; width: 68px; height: 34px; border-radius: 34px 34px 6px 6px; background: linear-gradient(#2f5d4d, #1b3a30); box-shadow: 0 10px 40px 8px rgb(255 205 130 / .55), inset 0 -6px 0 #f6d89a; }
+
+.hero-room { --k: .8; --rs: 1; --wood: #b4824f; --frame: #6e4a2a; --back: #1f1915; width: 100%; perspective: 2100px; perspective-origin: 50% 38%; }
+.stage {
+  position: relative; display: grid; grid-template-columns: 0 0; justify-content: center; transform-style: preserve-3d;
+  transform: scale(var(--rs)); transform-origin: 50% 50%;
+}
+/* two walls, 90 degrees apart: each turns 45 degrees around the corner line */
+.wall {
+  position: relative; width: 700px; padding-top: 118px; transform-style: flat; color: #f3ead9; display: flex; flex-direction: column; justify-content: flex-end;
+  background: repeating-linear-gradient(90deg, #243d37 0 46px, #2b4a42 46px 48px);
+}
+.wall::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 56px; background: linear-gradient(#17120e 0 6px, #5a3d24 6px 14px, #2a1d12 14px 18px, transparent 18px), linear-gradient(rgb(0 0 0 / .35), transparent); pointer-events: none; }
+.wall::after { content: ""; position: absolute; inset: 0; pointer-events: none; }
+.wall.left { justify-self: end; transform-origin: 100% 50%; transform: rotateY(45deg); padding-left: 112px; }
+.wall.right { justify-self: start; transform-origin: 0 50%; transform: rotateY(-45deg); padding-right: 112px; }
+.wall.left::after { background: linear-gradient(90deg, transparent 40%, rgb(0 0 0 / .18)); }
+.wall.right::after { background: linear-gradient(270deg, rgb(0 0 0 / .1), rgb(0 0 0 / .32) 70%, rgb(0 0 0 / .42)); }
+.hero-room .cabinet { margin: 0; }
+.hero-room .cabinet:hover { position: relative; z-index: 5; }
+
+/* floor: a plane lying at the foot of the walls, cut to the 90 degree wedge in front of the corner */
+.floor {
+  position: absolute; left: 50%; margin-left: -1300px; bottom: 0; width: 2600px; height: 1300px; transform-origin: 50% 100%; transform: rotateX(-90deg);
+  clip-path: polygon(50% 100%, 0 0, 100% 0);
+  background:
+    radial-gradient(700px 520px at 50% 85%, rgb(255 205 130 / .22), transparent 70%),
+    linear-gradient(0deg, transparent, rgb(0 0 0 / .45)),
+    repeating-linear-gradient(90deg, #7a5532 0 96px, #6a4a2b 96px 100px);
+}
+.rug {
+  position: absolute; left: calc(50% - 280px); bottom: 330px; width: 560px; height: 420px; border-radius: 6px; background:
+    repeating-linear-gradient(45deg, rgb(255 255 255 / .06) 0 6px, transparent 6px 12px), #7d2f2f;
+  box-shadow: inset 0 0 0 10px #7d2f2f, inset 0 0 0 14px #d8b86a, inset 0 0 0 26px #5b2020;
+}
+
+/* labels and empty text on the dark wall */
+.hero-room .case-name { color: #f3ead9; font-size: 15px; }
+.hero-room .case-name:hover { color: #ffd98f; }
+.hero-room .case-n { color: #bfb39c; }
+.hero-room .shelf-label::after { background: #8c7c62; }
+.hero-room .shelf-empty { color: #9a8f7b; }
+.hero-room .shelf-row { padding-top: 26px; }
+.hero-room .shelf-row.is-empty { padding-top: 10px; }
+.hero-room .books { min-height: calc(176px * var(--k)); }
+.hero-room .is-empty .books { min-height: calc(120px * var(--k)); }
+.hero-room .book { height: calc(var(--bh) * var(--k)); width: calc(var(--bw) * (.75 + var(--k) * .3)); }
+.hero-room .spine-title { font-size: 12.5px; }
+.hero-room .book-card { display: none !important; }
+
+.hero-tip {
+  position: fixed; z-index: 60; max-width: 280px; display: flex; flex-direction: column; gap: 2px; padding: 10px 14px; pointer-events: none;
+  background: var(--surface); color: var(--ink); border: 1px solid var(--line-strong); border-radius: 12px; box-shadow: var(--shadow);
+}
+.hero-tip strong { font-size: 14.5px; line-height: 1.3; overflow-wrap: anywhere; }
+.hero-tip .tip-sub { color: var(--muted); font-size: 13px; }
+.hero-tip small { color: var(--accent); font-size: 12px; margin-top: 2px; }
+
 .hero-down {
-  position: absolute; left: 50%; bottom: 14px; width: 40px; height: 40px; margin-left: -20px; display: grid; place-items: center;
-  border-radius: 50%; color: var(--muted); transition: background-color .15s, color .15s;
+  position: absolute; left: 50%; bottom: 12px; z-index: 4; width: 40px; height: 40px; margin-left: -20px; display: grid; place-items: center;
+  border-radius: 50%; color: #d8cdb6; transition: background-color .15s, color .15s;
 }
-.hero-down:hover { background: var(--accent-soft); color: var(--accent); }
+.hero-down:hover { background: rgb(255 255 255 / .12); color: #fff; }
 .hero-down .ic { width: 22px; height: 22px; }
-/* the one moment: books drop onto their shelves, one after another, once per visit */
-.hero-shelves.intro .book { animation: shelve .75s cubic-bezier(.2, .8, .2, 1) backwards; animation-delay: calc(var(--i, 0) * 38ms + .15s); }
+
+/* the one moment: books drop onto their shelves one after another, once per visit */
+.hero-room.intro .book { animation: shelve .75s cubic-bezier(.2, .8, .2, 1) backwards; animation-delay: calc(var(--i, 0) * 38ms + .15s); }
 @keyframes shelve { from { opacity: 0; transform: translateY(-40px); } to { opacity: 1; transform: none; } }
-@media (prefers-reduced-motion: reduce) { .hero-shelves.intro .book { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .hero-room.intro .book { animation: none; } }

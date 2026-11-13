@@ -81,12 +81,17 @@ highlights: [{ id, page, text, rects: [{x,y,w,h}], color, note, createdAt, updat
   part of the Markdown/HTML/print export (notes only).
 
 ## Start screen hero
-- `#/` has two sections. The first screen (`.hero`, 100svh) shows **only the bookcases**: the real library as two cases in a
-  corner (`Library.renderHero`), padded with unlabelled empty shelves up to 6 so a new library still looks like a room.
-  Books are scaled with `--k` so about three shelves per case fit the screen. A small chevron scrolls down.
+- `#/` has two sections. The first screen (`.hero`, 100svh) shows **only a library room**: the real library as two walls of
+  bookcases meeting at a **90 degree corner** (real CSS 3D: each `.wall` is turned 45 degrees around the corner line, with a
+  perspective on `.hero-room`). Wallpaper, crown molding, a wooden floor (a plane cut to a wedge) with a rug, and a pendant
+  lamp with a warm glow make it read as a library. Shelves are padded with unlabelled empty ones up to 6.
+  `Library.renderHero` scales books (`--k`) and the whole room (`--rs`) so it fits the screen. A small chevron scrolls down.
+- Because the walls are tilted, hover cards inside them would be skewed: in the hero the books show a flat tooltip (`#hero-tip`,
+  `Library.initHeroTip`) instead. Full actions (To read, move, delete) live in the library.
 - Below it (`#welcome-more`) is the old start content: heading, Choose a PDF / Open my library / Reading list, Continue card.
 - Intro moment: the books drop onto their shelves one after another, once per page load (`.intro`, off with reduced motion).
-- `Library._refreshView()` redraws the hero or the library, whichever is showing (used after moving a book or toggling To read).
+- `Library._refreshView()` redraws the hero or the library, whichever is showing.
+- The room is dark green in both themes on purpose (it is a scene, not UI).
 
 ## How things work
 - Pages are placeholders sized from the real page sizes. An IntersectionObserver renders canvas + text layer

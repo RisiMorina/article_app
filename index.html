@@ -31,7 +31,9 @@
   <!-- ============ WELCOME: first screen = only the bookcases, scroll for the rest ============ -->
   <main id="view-welcome" class="welcome" hidden aria-labelledby="welcome-title">
     <section class="hero" aria-label="Your bookcases">
-      <div id="hero-shelves" class="shelves cabinets two hero-shelves"></div>
+      <div class="hero-light" aria-hidden="true"></div>
+      <div class="hero-lamp" aria-hidden="true"><span class="cord"></span><span class="dome"></span></div>
+      <div id="hero-shelves" class="shelves hero-room"></div>
       <a class="hero-down" href="#welcome-more" id="hero-down" aria-label="Scroll down" title="Scroll down"><span data-icon="chevron-down"></span></a>
     </section>
 
@@ -220,6 +222,7 @@
   <button type="button" class="tb-note" id="tb-note">Highlight + note</button>
 </div>
 
+<div id="hero-tip" class="hero-tip" hidden><strong class="tip-title"></strong><span class="tip-sub"></span><small>Click to open</small></div>
 <div id="toasts" class="toasts" role="status" aria-live="polite"></div>
 <div id="drop-overlay" class="drop-overlay" hidden><div>Drop PDF to add it to your library</div></div>
 

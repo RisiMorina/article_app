@@ -78,22 +78,47 @@ const Library = {
   /** Redraw whichever screen is showing (start screen hero or library). */
   _refreshView() { if (!$('#view-welcome').hidden) this.renderHero(); else this.render(); },
 
-  /** The start screen's first screen: nothing but the bookcases, two cases in a corner. */
+  /** The start screen's first screen: a library room. Two walls of bookcases meet at a 90 degree corner (real CSS 3D). */
   renderHero() {
     const shelves = this._cases('', 'all');
     while (shelves.length < 6) shelves.push({ title: '', blank: true, books: [] });
     const half = Math.ceil(shelves.length / 2);
     const box = $('#hero-shelves');
-    const W = box.clientWidth || window.innerWidth || 1200;
-    const inner = Math.max((W - 2 * 112 - 28) / 2 - 68, 180);
-    // Shrink the books so a cabinet of about three shelves fits the first screen.
-    const rowsPer = Math.max(half, 1);
-    const k = Math.min(Math.max(((window.innerHeight - 150) / rowsPer - 44) / 221, 0.5), 0.9);
+    const WALL = 700, GUTTER = 112;                      // wall plane width (px, before scaling) and label gutter
+    const inner = WALL - GUTTER - 68;
+    // Books shrink so about three shelves per wall fit the screen; the whole room scales down on narrow windows.
+    const vh = window.innerHeight, vw = window.innerWidth;
+    const k = Math.min(Math.max(((vh - 130 - 120 - 40) / Math.max(half, 1) - 44) / 221, 0.66), 0.9);
+    const scale = Math.min(1, vw / 1180);
     box.style.setProperty('--k', k.toFixed(3));
+    box.style.setProperty('--rs', scale.toFixed(3));
     box.classList.toggle('intro', !this._heroShown);
     this._heroShown = true;
-    box.replaceChildren(this._cabinet(shelves.slice(0, half), inner, 'left'), this._cabinet(shelves.slice(half), inner, 'right'));
+    const left = h('div', { class: 'wall left' }, this._cabinet(shelves.slice(0, half), inner, 'left'));
+    const right = h('div', { class: 'wall right' }, this._cabinet(shelves.slice(half), inner, 'right'));
+    box.replaceChildren(h('div', { class: 'stage' },
+      h('div', { class: 'floor', 'aria-hidden': 'true' }, h('div', { class: 'rug' })),
+      left, right));
     $$('.book', box).forEach((b, i) => b.style.setProperty('--i', i));
+    // Fit the whole room on the first screen (the outer edges come closer in perspective, so leave 25% room).
+    const sh = $('.stage', box).offsetHeight || 700;
+    box.style.setProperty('--rs', Math.min(1, vw / 1250, (vh - 40) / (sh * 1.5)).toFixed(3));
+  },
+
+  /** Flat tooltip for hero books (the cabinets are tilted in 3D, so a card inside them would be skewed). */
+  initHeroTip() {
+    const box = $('#hero-shelves'), tip = $('#hero-tip');
+    box.addEventListener('mouseover', e => {
+      const book = e.target.closest('.book');
+      if (!book) return;
+      $('.tip-title', tip).textContent = book.dataset.title;
+      $('.tip-sub', tip).textContent = book.dataset.sub || '';
+      tip.hidden = false;
+      const r = book.getBoundingClientRect(), tw = tip.offsetWidth, th = tip.offsetHeight;
+      tip.style.left = Math.min(Math.max(r.left + r.width / 2 - tw / 2, 8), window.innerWidth - tw - 8) + 'px';
+      tip.style.top = (r.top - th - 14 < 8 ? r.bottom + 14 : r.top - th - 14) + 'px';
+    });
+    box.addEventListener('mouseout', e => { if (!e.relatedTarget || !e.relatedTarget.closest || !e.relatedTarget.closest('.book')) tip.hidden = true; });
   },
 
   _hasFolder(name) { return this.folders.some(f => f.toLowerCase() === name.toLowerCase()); },
@@ -278,7 +303,7 @@ const Library = {
     select.value = a.folder || '';
     const href = '#/article/' + encodeURIComponent(a.id);
     const li = h('li', {
-      class: 'book' + (a.toRead ? ' toread' : '') + (alignRight ? ' card-right' : ''), dataset: { id: a.id }, draggable: 'true',
+      class: 'book' + (a.toRead ? ' toread' : '') + (alignRight ? ' card-right' : ''), dataset: { id: a.id, title, sub }, draggable: 'true',
       style: { '--bw': this._bookWidth(a) + 'px', '--bh': this._bookHeight(a) + 'px', '--bg': bg, '--fg': fg }
     },
       h('a', { class: 'spine', href, draggable: 'false', 'aria-label': title + (a.toRead ? ' (on your reading list)' : '') },
@@ -448,6 +473,7 @@ const Library = {
 
     $('#search').addEventListener('input', e => { this.query = e.target.value; this.render(); });
     window.addEventListener('resize', debounce(() => { if (!$('#view-welcome').hidden || !$('#view-library').hidden) this._refreshView(); }, 200));
+    this.initHeroTip();
     $('#hero-down').addEventListener('click', e => { e.preventDefault(); $('#welcome-more').scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth' }); });
     $('#btn-folder-new').addEventListener('click', () => this.newFolder());
     $('#btn-folder-rename').addEventListener('click', () => this.renameFolder());

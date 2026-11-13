@@ -231,7 +231,10 @@ const Library = {
 
   _cabinet(shelves, width, side) {
     return h('div', { class: 'cabinet ' + side },
-      h('div', { class: 'cabinet-frame' }, h('div', { class: 'cabinet-inner' }, ...shelves.map(s => this._shelf(s, width, side)))));
+      h('div', { class: 'cabinet-frame' }, h('div', { class: 'cabinet-inner' },
+        h('span', { class: 'cab-face cab-back', 'aria-hidden': 'true' }), h('span', { class: 'cab-face cab-top', 'aria-hidden': 'true' }),
+        h('span', { class: 'cab-face cab-side cab-left', 'aria-hidden': 'true' }), h('span', { class: 'cab-face cab-side cab-right', 'aria-hidden': 'true' }),
+        ...shelves.map(s => this._shelf(s, width, side)))));
   },
 
   /** One shelf = one folder, labelled beside the bookcase. Books wrap onto an extra board when a row is full. */
@@ -306,8 +309,10 @@ const Library = {
       class: 'book' + (a.toRead ? ' toread' : '') + (alignRight ? ' card-right' : ''), dataset: { id: a.id, title, sub }, draggable: 'true',
       style: { '--bw': this._bookWidth(a) + 'px', '--bh': this._bookHeight(a) + 'px', '--bg': bg, '--fg': fg }
     },
-      h('a', { class: 'spine', href, draggable: 'false', 'aria-label': title + (a.toRead ? ' (on your reading list)' : '') },
-        h('span', { class: 'spine-title', text: title })),
+      h('div', { class: 'body' },
+        h('a', { class: 'spine', href, draggable: 'false', 'aria-label': title + (a.toRead ? ' (on your reading list)' : '') },
+          h('span', { class: 'spine-title', text: title })),
+        h('span', { class: 'face side-l', 'aria-hidden': 'true' }), h('span', { class: 'face side-r', 'aria-hidden': 'true' }), h('span', { class: 'face top', 'aria-hidden': 'true' })),
       h('div', { class: 'book-card' },
         h('a', { class: 'card-title', href, draggable: 'false', text: title }),
         sub ? h('span', { class: 'card-sub', text: sub }) : null,

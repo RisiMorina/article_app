@@ -99,6 +99,17 @@ highlights: [{ id, page, text, rects: [{x,y,w,h}], color, note, createdAt, updat
 spine colour). All are AI-generated, tileable or flat, no text. The original PNGs are not kept in the project (large); re-generate with
 similar prompts if they need changing. A bookcase is `.cabinet-frame` (wood) > `.cabinet-inner` (dark panelled back) > shelves.
 
+## 3D bookcases
+- Everything below `.cabinet` is real CSS 3D (`transform-style: preserve-3d`). A case is a box: `.cabinet-frame::after` is a hollow wood ring
+  (masked), `.cab-back` / `.cab-left` / `.cab-right` / `.cab-top` are the inside faces (depth `--D`), each shelf `.plank` has a top surface
+  (`::before`, rotateX) and each book is a box: `.body` > `.spine` (front) + `.side-l` / `.side-r` / `.top` (depth `--bd`).
+- **Do not put `filter`, `opacity`, `overflow` or `mask` on elements in that chain**: the browser flattens the 3D (that is why the book
+  shadows and plank brightness are done with gradients, not `filter`). Opacity inside the intro animation is fine because it ends.
+- In the hero a case is pushed `translateZ(--D)` so its back sits on the wall; the cases keep `--D` away from the corner so they do not
+  collide, and the shelf names are pushed back onto the wall plane.
+- Hover/focus pulls a book out towards you (`translate3d(0, -3px, 0.42 * --D)`). In the library page the same classes work, with the
+  `.cabinets` perspective.
+
 ## How things work
 - Pages are placeholders sized from the real page sizes. An IntersectionObserver renders canvas + text layer
   1200px before a page scrolls into view, and frees pages that are more than 5000px away.

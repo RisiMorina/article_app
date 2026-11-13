@@ -726,3 +726,73 @@ body.resizing .r-body { transition: none; }
 .hero-room.intro .book { animation: shelve .75s cubic-bezier(.2, .8, .2, 1) backwards; animation-delay: calc(var(--i, 0) * 38ms + .15s); }
 @keyframes shelve { from { opacity: 0; transform: translateY(-40px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .hero-room.intro .book { animation: none; } }
+
+/* =========================================================
+   Real depth: each bookcase is a box (hollow frame, back, sides, top), shelves are boards you can see the top of,
+   and every book is a box with a spine, two sides and a top. Needs preserve-3d all the way down: no filter, no
+   overflow clipping and no opacity on these elements, or the browser flattens them.
+   ========================================================= */
+.shelves { --D: 130px; --bd: 100px; }
+.hero-room { --D: calc(130px * var(--k)); --bd: calc(100px * var(--k)); }
+.cabinet, .cabinet-frame, .cabinet-inner, .shelf, .shelf-row, .books, .book, .book .body, .plank { transform-style: preserve-3d; }
+/* in the hero the case stands in front of its wall: its back panel sits on the wall */
+.hero-room .cabinet { transform: translateZ(var(--D)); }
+.wall { transform-style: preserve-3d; }
+.wall.left::after, .wall.right::after { transform: translateZ(calc(var(--D) + 4px)); }
+
+/* the frame is a hollow ring now, so you can see into the case */
+.cabinet-frame { background: none; box-shadow: none; }
+.cabinet-frame::after {
+  content: ""; position: absolute; inset: 0; box-sizing: border-box; padding: 26px 22px 0; border-radius: 8px 8px 0 0; pointer-events: none;
+  background:
+    linear-gradient(90deg, rgb(255 255 255 / .16), transparent 7%, transparent 93%, rgb(0 0 0 / .28)),
+    linear-gradient(rgb(196 128 66 / .28), rgb(196 128 66 / .28)),
+    url("../images/wood.webp") 0 0 / 280px;
+  box-shadow: 0 0 0 1px rgb(0 0 0 / .5);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+.cabinet-inner { position: relative; background: none; box-shadow: none; }
+.cab-face { position: absolute; display: block; pointer-events: none; }
+.cab-back {
+  inset: 0; transform: translateZ(calc(var(--D) * -1));
+  background:
+    repeating-linear-gradient(90deg, transparent 0 118px, rgb(0 0 0 / .38) 118px 120px, rgb(255 220 170 / .06) 120px 122px),
+    linear-gradient(rgb(22 13 6 / .5), rgb(22 13 6 / .5)),
+    url("../images/wood.webp") 40px 0 / 380px;
+}
+.cab-side { top: 0; bottom: 0; width: var(--D); background: linear-gradient(rgb(22 13 6 / .35), rgb(22 13 6 / .35)), url("../images/wood.webp") 0 0 / 360px; }
+.cab-left { left: 0; transform-origin: 0 50%; transform: rotateY(90deg); box-shadow: inset -40px 0 50px -20px rgb(0 0 0 / .65); }
+.cab-right { right: 0; transform-origin: 100% 50%; transform: rotateY(-90deg); box-shadow: inset 40px 0 50px -20px rgb(0 0 0 / .65); }
+.cab-top { left: 0; right: 0; top: 0; height: var(--D); transform-origin: 50% 0; transform: rotateX(-90deg); background: linear-gradient(rgb(0 0 0 / .55), rgb(0 0 0 / .55)), url("../images/wood.webp") 0 0 / 360px; }
+
+/* shelf boards: front edge plus a visible top surface running back into the case */
+.plank { position: relative; filter: none; background:
+  linear-gradient(rgb(255 225 180 / .38) 0 2px, transparent 2px 10px, rgb(0 0 0 / .38)),
+  linear-gradient(rgb(255 200 140 / .22), rgb(255 200 140 / .22)),
+  url("../images/wood.webp") 0 30% / 340px; }
+.plank::before {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 100%; height: var(--D); transform-origin: 50% 100%; transform: rotateX(90deg);
+  background: linear-gradient(0deg, rgb(0 0 0 / .05), rgb(0 0 0 / .5)), linear-gradient(rgb(255 200 140 / .2), rgb(255 200 140 / .2)), url("../images/wood.webp") 0 0 / 340px;
+}
+.shelf-row::before { display: none; }
+
+/* books are boxes standing on the board, a little behind its front edge */
+.book { filter: none; }
+.book .body { position: absolute; inset: 0; transform: translateZ(-14px); }
+.face { position: absolute; display: block; pointer-events: none; }
+.side-l, .side-r { top: 0; height: 100%; width: var(--bd); background: linear-gradient(rgb(0 0 0 / .45), rgb(0 0 0 / .45)), var(--bg); }
+.side-r { left: 100%; transform-origin: 0 50%; transform: rotateY(90deg); }
+.side-l { right: 100%; transform-origin: 100% 50%; transform: rotateY(-90deg); }
+.top { left: 0; top: 0; width: 100%; height: var(--bd); transform-origin: 50% 0; transform: rotateX(-90deg); background: repeating-linear-gradient(0deg, #e9e0c9 0 2px, #d6ccb0 2px 3px); box-shadow: inset 0 0 0 3px var(--bg); }
+.spine { box-shadow: none; }
+.book:hover .spine { box-shadow: 0 0 0 2px var(--accent); }
+
+/* keep the two cases from running into each other at the corner, and put the shelf names on the wall itself */
+.hero-room .wall.left .cabinet { margin-right: var(--D); }
+.hero-room .wall.right .cabinet { margin-left: var(--D); }
+.hero-room .shelf-label { transform: translateZ(calc(var(--D) * -1)); }
+
+/* hovering pulls the book out of the shelf towards you, like taking it by the spine */
+.book:hover, .book:focus-within { transform: translate3d(0, -3px, calc(var(--D) * .42)); }
+.book .body, .book { transition: transform .25s cubic-bezier(.3, .7, .2, 1); }

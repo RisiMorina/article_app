@@ -110,6 +110,15 @@ similar prompts if they need changing. A bookcase is `.cabinet-frame` (wood) > `
 - Hover/focus pulls a book out towards you (`translate3d(0, -3px, 0.42 * --D)`). In the library page the same classes work, with the
   `.cabinets` perspective.
 
+## Packed shelves (decorative books)
+- `Library._rowItems` packs every row with **decorative books** (`li.filler`, `aria-hidden`, no title, not clickable) around your real ones, so
+  a shelf looks like a full library. They are not articles and are not counted. A real folder with no articles stays empty on purpose; blank
+  padding shelves in the hero are filled with decorative books. Colours come from `Library._palette` (vintage: burgundy, forest, navy, ochre...),
+  widths/heights from a seeded hash, so a shelf looks the same on every visit.
+- Row capacity must match the real width: in the hero the books are scaled by `.75 + .3 * k` and each case loses `--D` to its corner margin
+  (`renderHero` passes `(inner - 130k - 4) / bw`). If books stick out of a case, check that arithmetic first.
+- The case has fluted pilasters / dentil cornice (grooves in the frame ring), carved caps (`.cab-cap`) and a plinth (`.cab-plinth`).
+
 ## How things work
 - Pages are placeholders sized from the real page sizes. An IntersectionObserver renders canvas + text layer
   1200px before a page scrolls into view, and frees pages that are more than 5000px away.

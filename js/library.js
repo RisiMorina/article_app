@@ -90,12 +90,13 @@ const Library = {
     const vh = window.innerHeight, vw = window.innerWidth;
     const k = Math.min(Math.max(((vh - 130 - 120 - 40) / Math.max(half, 1) - 44) / 221, 0.8), 1);
     const scale = Math.min(1, vw / 1180);
+    const bw = 0.75 + k * 0.3;                              // book width factor used by the hero CSS
     box.style.setProperty('--k', k.toFixed(3));
     box.style.setProperty('--rs', scale.toFixed(3));
     box.classList.toggle('intro', !this._heroShown);
     this._heroShown = true;
-    const left = h('div', { class: 'wall left' }, this._cabinet(shelves.slice(0, half), inner, 'left'));
-    const right = h('div', { class: 'wall right' }, this._cabinet(shelves.slice(half), inner, 'right'));
+    const left = h('div', { class: 'wall left' }, this._cabinet(shelves.slice(0, half), (inner - 130 * k - 4) / bw, 'left'));
+    const right = h('div', { class: 'wall right' }, this._cabinet(shelves.slice(half), (inner - 130 * k - 4) / bw, 'right'));
     box.replaceChildren(h('div', { class: 'stage' },
       h('div', { class: 'floor', 'aria-hidden': 'true' }, h('div', { class: 'rug' })),
       left, right));
@@ -231,7 +232,9 @@ const Library = {
 
   _cabinet(shelves, width, side) {
     return h('div', { class: 'cabinet ' + side },
-      h('div', { class: 'cabinet-frame' }, h('div', { class: 'cabinet-inner' },
+      h('div', { class: 'cabinet-frame' },
+        h('span', { class: 'cab-cap cap-l', 'aria-hidden': 'true' }), h('span', { class: 'cab-cap cap-r', 'aria-hidden': 'true' }), h('span', { class: 'cab-plinth', 'aria-hidden': 'true' }),
+        h('div', { class: 'cabinet-inner' },
         h('span', { class: 'cab-face cab-back', 'aria-hidden': 'true' }), h('span', { class: 'cab-face cab-top', 'aria-hidden': 'true' }),
         h('span', { class: 'cab-face cab-side cab-left', 'aria-hidden': 'true' }), h('span', { class: 'cab-face cab-side cab-right', 'aria-hidden': 'true' }),
         ...shelves.map(s => this._shelf(s, width, side)))));
@@ -258,7 +261,7 @@ const Library = {
       ...rows.map((r, i) => h('div', { class: 'shelf-row' + (c.books.length ? '' : ' is-empty') },
         i === 0 ? label : null,
         h('ul', { class: 'books' },
-          ...r.map(({ a, x }) => this._book(a, side === 'right' || x > width / 2)),
+          ...this._rowItems(r, width, c, i, side),
           !c.books.length && !c.blank ? h('li', { class: 'shelf-empty', text: droppable ? 'Empty. Drag a book here.' : 'Nothing here yet.' }) : null),
         h('div', { class: 'plank', 'aria-hidden': 'true' }))));
     if (droppable) {
@@ -279,17 +282,52 @@ const Library = {
     return el;
   },
 
+  /** One row of a shelf: your real books, with decorative books packed in around them so the shelf looks full.
+      A folder with no books stays empty, so it is clear it is empty. */
+  _rowItems(row, width, c, rowIndex, side) {
+    const real = row.map(({ a, x }) => this._book(a, side === 'right' || x > width / 2));
+    if (!c.books.length && !c.blank) return real;
+    let room = width - row.reduce((n, { a }) => n + this._bookWidth(a) + 3, 0) - 6;
+    let seed = this._hash((c.title || 'blank') + ':' + rowIndex + ':' + (c.books.length));
+    const fill = [];
+    while (room > 20) {
+      seed = (seed * 1664525 + 1013904223) >>> 0;
+      let w = 15 + (seed >>> 8) % 26;
+      if (w + 3 > room) w = Math.max(room - 3, 12);
+      fill.push(this._filler(seed, w));
+      room -= w + 3;
+    }
+    // spread the real books evenly between the decorative ones
+    const out = [], m = real.length, n = fill.length;
+    let fi = 0;
+    real.forEach((b, k) => {
+      const upto = Math.round((k + 1) * n / (m + 1));
+      while (fi < upto) out.push(fill[fi++]);
+      out.push(b);
+    });
+    while (fi < n) out.push(fill[fi++]);
+    return out;
+  },
+
+  /** A decorative book: no title, not clickable. */
+  _filler(seed, w) {
+    const [bg, fg] = this._palette[(seed >>> 4) % this._palette.length];
+    const hgt = Math.round(150 + ((seed >>> 12) % 72));            // 150 to 221, like the real books
+    return h('li', {
+      class: 'filler' + (((seed >>> 20) % 3) === 0 ? ' plate' : ''), 'aria-hidden': 'true',
+      style: { '--bw': w + 'px', '--bh': hgt + 'px', '--bg': bg, '--fg': fg }
+    }, h('div', { class: 'body' }, h('span', { class: 'spine' }), h('span', { class: 'face top' })));
+  },
+
   // Thicker books for longer articles, a little height variety so a shelf looks lived in.
   _bookWidth(a) { return Math.round(Math.min(Math.max(34 + (a.numPages || 8) * 1.2, 38), 72)); },
   _bookHeight(a) { return 176 + (this._hash(a.id) % 6) * 9; },
-  _spine(a) {
-    const palette = [
-      ['#2f4a6d', '#fff'], ['#7b4b94', '#fff'], ['#2c6e63', '#fff'], ['#a2453f', '#fff'],
-      ['#3b3f4a', '#fff'], ['#c9962b', '#241a05'], ['#5a6b2f', '#fff'], ['#8a5a3b', '#fff'],
-      ['#b0456a', '#fff'], ['#d9d2c0', '#2a2620']
-    ];
-    return palette[this._hash(a.id + 'x') % palette.length];
-  },
+  _palette: [
+    ['#6b2530', '#f0dca4'], ['#2f4a36', '#f0dca4'], ['#26364f', '#f0dca4'], ['#5a3a24', '#f0dca4'], ['#a7782c', '#2b1d08'],
+    ['#2f5b5c', '#f0dca4'], ['#512f4c', '#f0dca4'], ['#b79b6c', '#2b2210'], ['#575a2b', '#f0dca4'], ['#3c4d66', '#f0dca4'],
+    ['#7a3b22', '#f0dca4'], ['#1f2a24', '#e6cf93'], ['#8b2f2a', '#f3e2b4'], ['#44352a', '#e6cf93']
+  ],
+  _spine(a) { return this._palette[this._hash(a.id + 'x') % this._palette.length]; },
 
   _book(a, alignRight) {
     const title = displayTitle(a);

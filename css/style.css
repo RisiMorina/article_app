@@ -861,3 +861,50 @@ body.resizing .r-body { transition: none; }
 .pcase .shelf-empty { align-self: center; padding: 0 0 calc(30 * var(--u)) calc(14 * var(--u)); font-size: 13px; }
 .hero-room .wall { width: calc(560px + 112px); }
 .hero-room .wall .pcase { margin: 0; }
+
+/* =========================================================
+   Real depth: the case is a stack of layers in 3D. Back photo at the wall, front-frame photo (with the shelf openings cut out) --cd in
+   front of it, side panels between them, a board top under every shelf, and the books standing between.
+   ========================================================= */
+.pcase { --cd: calc(150 * var(--u)); --bd: calc(80 * var(--u)); --D: calc(100 * var(--u)); }
+.pcase-back { transform: none; }
+.pcase-front { transform: translateZ(var(--cd)); }
+.cs {
+  position: absolute; display: block; pointer-events: none; width: var(--cd); transform: translateZ(var(--cd)) rotateY(90deg);
+  background: linear-gradient(rgb(20 10 4 / .35), rgb(20 10 4 / .35)), url("../images/wood.webp") 0 0 / 260px;
+}
+.cs-il { left: 18.3%; top: 10.4%; height: 82%; transform-origin: 0 50%; }
+.cs-ir { right: 18.5%; top: 10.4%; height: 82%; transform-origin: 100% 50%; transform: translateZ(var(--cd)) rotateY(-90deg); }
+.cs-ol { left: 6.8%; top: 1.9%; height: 96.5%; transform-origin: 0 50%; box-shadow: inset -30px 0 40px -20px rgb(0 0 0 / .6); }
+.cs-or { right: 6.8%; top: 1.9%; height: 96.5%; transform-origin: 100% 50%; transform: translateZ(var(--cd)) rotateY(-90deg); box-shadow: inset 30px 0 40px -20px rgb(0 0 0 / .6); }
+.pslot { transform: translateZ(var(--cd)); }
+.pslot::before {
+  content: ""; position: absolute; left: 18.2%; width: 63.3%; bottom: 0; height: var(--cd); transform-origin: 50% 100%; transform: rotateX(90deg);
+  background: linear-gradient(0deg, rgb(0 0 0 / .1), rgb(0 0 0 / .55)), linear-gradient(rgb(255 190 120 / .22), rgb(255 190 120 / .22)), url("../images/wood.webp") 0 0 / 300px;
+}
+.pcase .book .body { transform: translateZ(calc(var(--bd) + 16 * var(--u) - var(--cd))) rotate(var(--lean, 0deg)); }
+
+/* photographed leather spines, with a small dark plaque for the title */
+.pcase .spine {
+  background:
+    linear-gradient(90deg, rgb(255 255 255 / .16), transparent 18%, transparent 80%, rgb(0 0 0 / .32)),
+    var(--spine) center / 100% 100% no-repeat,
+    var(--bg);
+  background-blend-mode: normal;
+}
+.pcase .spine-title {
+  display: block; box-sizing: border-box; max-height: 72%; margin: calc(8 * var(--u)) auto 0; padding: calc(5 * var(--u)) calc(2.5 * var(--u));
+  background: rgb(22 12 6 / .82); color: #f3dfa6; border: 1px solid rgb(214 178 98 / .65); border-radius: 1px; font-weight: 600; text-shadow: none;
+}
+.pcase .side-l, .pcase .side-r { background: linear-gradient(rgb(0 0 0 / .45), rgb(0 0 0 / .45)), var(--spine) 0 0 / 100% 100%, var(--bg); }
+.pcase .book.flat .spine { background: var(--bg); position: absolute; overflow: visible; }
+.pcase .book.flat .spine::before {
+  content: ""; position: absolute; left: 50%; top: 50%; width: calc(var(--bh) * var(--u)); height: calc(var(--bw) * var(--u));
+  transform: translate(-50%, -50%) rotate(90deg); background: var(--spine) center / 100% 100% no-repeat;
+}
+.pcase .book.flat .spine-title { position: relative; z-index: 1; margin: 0; }
+
+/* the library page looks at the case from the right, so its left side and the shelf boards show */
+#shelves { perspective: 1700px; perspective-origin: 92% 25%; }
+.pcase .shelf-label { transform: translateZ(calc(var(--cd) * -1)); }
+.pcase .spine-title { max-height: 46%; padding: calc(4 * var(--u)) calc(2 * var(--u)); background: rgb(22 12 6 / .62); font-size: max(7px, calc(12 * var(--u))); }

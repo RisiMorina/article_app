@@ -224,7 +224,7 @@ const Library = {
   _hash(s) { let n = 0; for (let i = 0; i < s.length; i++) n = (n * 31 + s.charCodeAt(i)) >>> 0; return n; },
 
   // The case photo is 880 x 1168 "units". Shelf floors and compartment heights were measured on images/case.webp.
-  SLOTS: [{ floor: 305, h: 175 }, { floor: 473, h: 140 }, { floor: 637, h: 147 }, { floor: 800, h: 143 }, { floor: 958, h: 130 }],
+  SLOTS: [{ floor: 298, h: 175 }, { floor: 470, h: 136 }, { floor: 636, h: 134 }, { floor: 806, h: 134 }, { floor: 964, h: 120 }],
   CASE: { w: 880, h: 1168, left: 160, inner: 557 },
   ROW_CAP: 547,                                  // usable width of one shelf, in units
 
@@ -251,8 +251,11 @@ const Library = {
     const padded = slots.slice();
     while (padded.length < this.SLOTS.length) padded.push({ blank: true, row: [], key: 'blank' + padded.length });
     return h('div', { class: 'pcase ' + side, style: { '--pw': pw + 'px', '--u': (pw / C.w) + 'px' } },
-      h('img', { class: 'pcase-img', src: 'images/case.webp', alt: '', draggable: 'false' }),
-      ...padded.map((s, i) => this._pslot(s, i, side)));
+      h('img', { class: 'pcase-img pcase-back', src: 'images/case-back.webp', alt: '', draggable: 'false' }),
+      h('span', { class: 'cs cs-il', 'aria-hidden': 'true' }), h('span', { class: 'cs cs-ir', 'aria-hidden': 'true' }),
+      h('span', { class: 'cs cs-ol', 'aria-hidden': 'true' }), h('span', { class: 'cs cs-or', 'aria-hidden': 'true' }),
+      ...padded.map((s, i) => this._pslot(s, i, side)),
+      h('img', { class: 'pcase-img pcase-front', src: 'images/case-frame.webp', alt: '', draggable: 'false' }));
   },
 
   _pslot(s, i, side) {
@@ -317,7 +320,7 @@ const Library = {
 
   // Book sizes are in case-photo units (see CASE): thicker for longer articles, a little height variety.
   _bookWidth(a) { return Math.round(Math.min(Math.max(22 + (a.numPages || 8) * 0.4, 25), 52)); },
-  _bookHeight(a) { return 108 + (this._hash(a.id) % 5) * 6; },
+  _bookHeight(a) { return 98 + (this._hash(a.id) % 5) * 5; },
   _palette: [
     ['#6b2530', '#f0dca4'], ['#2f4a36', '#f0dca4'], ['#26364f', '#f0dca4'], ['#5a3a24', '#f0dca4'], ['#a7782c', '#2b1d08'],
     ['#2f5b5c', '#f0dca4'], ['#512f4c', '#f0dca4'], ['#b79b6c', '#2b2210'], ['#575a2b', '#f0dca4'], ['#3c4d66', '#f0dca4'],
@@ -341,6 +344,7 @@ const Library = {
     const href = '#/article/' + encodeURIComponent(a.id);
     const lean = opt.lean || 0;
     const style = { '--bw': opt.flat ? opt.len : this._bookWidth(a), '--bh': opt.flat ? opt.thick : this._bookHeight(a), '--bg': bg, '--fg': fg };
+    style['--spine'] = 'url(' + new URL('images/spines/s' + String(1 + this._hash(a.id + 'sp') % 23).padStart(2, '0') + '.webp', document.baseURI).href + ')';
     if (lean) { style['--lean'] = lean + 'deg'; style['--ls'] = Math.abs(Math.sin(lean * Math.PI / 180)).toFixed(3); }
     if (opt.flat) { style['--off'] = opt.off; style['--tilt'] = opt.tilt + 'deg'; }
     const li = h(opt.flat ? 'div' : 'li', {

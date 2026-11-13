@@ -95,18 +95,26 @@ highlights: [{ id, page, text, rects: [{x,y,w,h}], color, note, createdAt, updat
 spine colour). All are AI-generated, tileable or flat, no text. The original PNGs are not kept in the project (large); re-generate with
 similar prompts if they need changing. A bookcase is `.cabinet-frame` (wood) > `.cabinet-inner` (dark panelled back) > shelves.
 
-## Photographed bookcases
-- `images/case.webp` is an AI-generated (Higgsfield) photo of an empty carved walnut bookcase, cut out with alpha (880 x 1168). It has 5 usable
-  shelves (the arched top plus four more); the short bottom one is unused. Their floors and heights are measured in photo "units" in
-  `Library.SLOTS` (and `CASE`, `ROW_CAP`). If you replace the photo, re-measure those numbers.
-- `Library._slotsFor` turns folders into slots (one per row of books; a full folder takes several slots), `_pcase` builds one case (the photo +
-  `.pslot` per shelf), 5 shelves per case, more folders mean more cases. The library page shows all cases; the hero shows the first two.
-- Books are real 3D boxes standing in front of the photo: sizes are unitless numbers in photo units, `--u` (px per unit) is set per case from
-  its width, so everything scales with the case. Do not put `filter`, `opacity`, `overflow` or `mask` on elements between the wall and a book:
-  the browser would flatten the 3D (book shadows etc. are gradients).
+## Photographed bookcases (real 3D)
+- The case comes from one AI-generated (Higgsfield) photo of an empty carved walnut bookcase, 880 x 1168 "units", cut into layers:
+  `images/case-back.webp` (back panel at the wall, boards painted out), `images/case-frame.webp` (frame + shelf boards, the shelf openings are
+  transparent) placed `--cd` (150 units) in front of it, and between them real planes: inner/outer side panels (`.cs-*`, wood texture) and a
+  board top under every shelf (`.pslot::before`). Books stand between the layers, so you see real depth when the view is angled.
+  `images/case.webp` is the uncut photo (kept for measuring; not used at runtime).
+- 5 usable shelves per case (arched top + four more; the short bottom one is unused). Floors and heights are measured in units in
+  `Library.SLOTS` (with `CASE`, `ROW_CAP`). If the photo is replaced, re-measure, and redo the three layer images (alpha cutout, frame openings,
+  back with boards painted out: see the Higgsfield notes below).
+- `Library._slotsFor` turns folders into slots (one per row of books; a full folder takes several), `_pcase` builds one case. More folders mean
+  more cases. The library page shows all cases (looking from the right, `#shelves` perspective); the hero shows the first two, in the corner.
+- Books are 3D boxes: sizes are unitless numbers in photo units, `--u` (px per unit) is set per case from its width. **No `filter`, `opacity`,
+  `overflow` or `mask` on elements between the wall and a book**, or the browser flattens the 3D.
+- Spines are 23 photographed leather spines (`images/spines/s01..s23.webp`, cut from two generated photos), chosen per book by a hash of its id,
+  with a small dark title plaque. The texture URL is set in JS as an absolute URL (`--spine`) because a relative URL in a custom property
+  would resolve against the stylesheet.
 - Hover/focus pulls a book out towards you (`translate3d(0, -3px, 0.42 * --D)`).
-- Old CSS for the earlier CSS-drawn cases (`.cabinet*`, `.cab-*`, `.plank`, `.shelf-row`, `.cabinets`, textures `wood.webp`) is unused now and can be
-  deleted in a cleanup.
+- Higgsfield prompts used (gpt_image_2_6): empty ornate walnut bookcase, straight-on, five empty shelves, grey background (3:4); twelve leather
+  spines side by side, no text, black background (16:9). The original PNGs are not in the project.
+- Old CSS for the earlier CSS-drawn cases (`.cabinet*`, `.cab-*`, `.plank`, `.shelf-row`, `.cabinets`) is unused and can be deleted in a cleanup.
 
 ## Natural shelves
 - Only real articles are on the shelves (no decorative filler books; an empty folder is an empty shelf, on purpose).

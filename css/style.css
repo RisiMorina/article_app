@@ -542,6 +542,8 @@ body.resizing .r-body { transition: none; }
 .book { filter: drop-shadow(2px 3px 3px rgb(0 0 0 / .55)); position: relative; flex: none; width: var(--bw); height: var(--bh); transition: transform .22s cubic-bezier(.3, .7, .2, 1); }
 .book:hover, .book:focus-within { transform: translateY(-14px); z-index: 6; }
 .book.dragging { opacity: .35; }
+.book { cursor: pointer; }   /* the whole book opens its article, not only the spine link */
+.book-card { cursor: default; }
 .spine {
   position: absolute; inset: 0; display: block; padding: 18px 0 18px; border-radius: 3px 3px 0 0; color: var(--fg); text-decoration: none;
   background:
@@ -698,7 +700,7 @@ body.resizing .r-body { transition: none; }
 .hero-room .case-name:hover { color: #ffd98f; }
 .hero-room .case-n { color: #bfb39c; }
 .hero-room .shelf-label::after { background: #8c7c62; }
-.hero-room .shelf-empty { color: #9a8f7b; }
+.hero-room .shelf-empty { display: none; }   /* no drag-and-drop in the hero; an empty shelf just stays empty */
 .hero-room .shelf-row { padding-top: 26px; }
 .hero-room .shelf-row.is-empty { padding-top: 10px; }
 .hero-room .books { min-height: calc(176px * var(--k)); }
@@ -1032,7 +1034,8 @@ body.resizing .r-body { transition: none; }
 .hero-room.single .wall.left { justify-self: center; transform: none; padding-left: 900px; padding-right: 900px; }
 .hero-room.single .floor, .hero-room.single .ceiling { clip-path: none; }
 .hero-room.single .wall .pcase { margin: 0; }
-.hero-room.single .wall .pcase .cs-ol, .hero-room.single .wall .pcase .cs-or { display: block; }
+/* one flat case seen from the front: its outer sides face away from you, so they stay hidden (they showed as dark strips beside the columns) */
+.hero-room.single .wall .pcase .cs-ol, .hero-room.single .wall .pcase .cs-or { display: none; }
 .hero-room.single .wall.left::after { background: linear-gradient(90deg, rgb(0 0 0 / .3), transparent 25%, transparent 75%, rgb(0 0 0 / .3)); }
 .hero-room.single .pslot { cursor: default; }
 .hero.zoomed:has(.single) .pslot, .hero-room.single .pslot { cursor: default; }

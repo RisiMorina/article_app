@@ -117,6 +117,7 @@ const Library = {
       if (!isFinite(f) || f >= 1) break;
       rs *= f * 0.98;
     }
+    // One shelf (empty or one row of books): open zoomed on it, as close as the photo stays sharp.
     if (real.length <= 1) this.zoomTo($('.pslot', box), { instant: true, locked: true });
   },
 
@@ -134,7 +135,9 @@ const Library = {
     stage.style.transform = `scale(${rs}) rotateY(${a}deg)`;
     const q = books.getBoundingClientRect(), Q = { x: q.left + q.width / 2, y: q.top + q.height / 2 };
     const hr = hero.getBoundingClientRect(), C = { x: hr.left + hr.width / 2, y: hr.top + hr.height / 2 };
-    const k = Math.min(Math.max(Math.min(hr.width * 0.62, 1100) / Math.max(q.width, 1), 1), 6);
+    // Never blow the photos up past their own resolution (880 px wide, shown PW px wide at scale rs), or the shelf turns blurry.
+    const kSharp = 880 * 1.1 / (560 * rs * (window.devicePixelRatio || 1));
+    const k = Math.min(Math.max(Math.min(hr.width * 0.62, 1100) / Math.max(q.width, 1), 1), 6, Math.max(kSharp, 1));
     const tx = C.x - O.x - k * (Q.x - O.x), ty = C.y - O.y - k * (Q.y - O.y);
     stage.style.transform = `scale(${rs})`;
     void stage.offsetWidth;                           // start the animation from the room view
@@ -288,6 +291,7 @@ const Library = {
   SLOTS: [{ floor: 298, h: 175 }, { floor: 470, h: 136 }, { floor: 636, h: 134 }, { floor: 806, h: 134 }, { floor: 964, h: 120 }],
   CASE: { w: 880, h: 1168, left: 160, inner: 557 },
   ROW_CAP: 547,                                  // usable width of one shelf, in units
+  ARCH_INSET: 50,                                // the top shelf sits under the arch: books keep this far from each side so they stay clear of it
 
   /** Turn shelves (folders) into slots, one per row of books. A full folder takes several slots. */
   _slotsFor(cases) {
@@ -295,9 +299,10 @@ const Library = {
     for (const c of cases) {
       const rows = [[]];
       let used = 0;
+      const cap = () => (out.length + rows.length - 1) % this.SLOTS.length === 0 ? this.ROW_CAP - 2 * this.ARCH_INSET : this.ROW_CAP;
       for (const a of c.books) {
         const w = this._bookWidth(a) + 5;
-        if (used + w > this.ROW_CAP && rows.at(-1).length) { rows.push([]); used = 0; }
+        if (used + w > cap() && rows.at(-1).length) { rows.push([]); used = 0; }
         rows.at(-1).push(a);
         used += w;
       }
@@ -333,7 +338,9 @@ const Library = {
       class: 'pslot', dataset: s.blank ? { blank: '1' } : {}, style: { bottom: ((C.h - g.floor) / C.h * 100) + '%', height: (g.h / C.h * 100) + '%' }
     },
       label,
-      h('ul', { class: 'books', style: { left: (C.left / C.w * 100) + '%', width: (C.inner / C.w * 100) + '%' } },
+      h('ul', { class: 'books', style: i === 0
+        ? { left: ((C.left + this.ARCH_INSET) / C.w * 100) + '%', width: ((C.inner - 2 * this.ARCH_INSET) / C.w * 100) + '%' }
+        : { left: (C.left / C.w * 100) + '%', width: (C.inner / C.w * 100) + '%' } },
         ...this._rowItems(s.row, s.key, side),
         empty ? h('li', { class: 'shelf-empty', text: droppable ? 'Empty. Drag a book here.' : 'Nothing here yet.' }) : null));
     if (droppable) {
@@ -582,6 +589,12 @@ const Library = {
     $('#search').addEventListener('input', e => { this.query = e.target.value; this.render(); });
     window.addEventListener('resize', debounce(() => { if (!$('#view-welcome').hidden || !$('#view-library').hidden) this._refreshView(); }, 200));
     this.initHeroTip();
+    // In 3D the pointer often lands on the book itself rather than its spine link, so a click anywhere on a book (not its card) opens it.
+    for (const sel of ['#shelves', '#hero-shelves']) $(sel).addEventListener('click', e => {
+      const book = e.target.closest('.book');
+      if (!book || e.target.closest('a, button, select, .book-card') || e.defaultPrevented) return;
+      location.hash = '#/article/' + encodeURIComponent(book.dataset.id);
+    });
     $('#hero-shelves').addEventListener('click', e => {
       if (e.target.closest('.book')) return;                  // a book opens its article
       const slot = e.target.closest('.pslot');

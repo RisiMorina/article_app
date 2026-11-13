@@ -90,6 +90,12 @@ highlights: [{ id, page, text, rects: [{x,y,w,h}], color, note, createdAt, updat
   the frame photo), in the hero and the library page alike.
 - `renderHero` fits the room by **measuring** the projected height and width of all `.pcase-front` images and shrinking `--rs` until they fit
   (perspective makes the near parts bigger than a formula predicts). Test at wide, short windows like 1850x880 and at 1440x900.
+- **One continuous case**: neighbouring bays overlap by 220 units so their side columns coincide into a single shared post (the later bay's
+  front image sits 1px further out to avoid flicker); at the corner the two frames cross on the mitre line (60 units short of the corner).
+- **Click a shelf to zoom in** (hero only): `Library.zoomTo(slotEl)` turns the stage 45 degrees so the clicked wall faces you, measures the shelf under
+  that rotation, then animates `translate + scale + rotateY` on `.stage` (about 1s, instant with reduced motion). A "Back to the room" button,
+  Esc, or a click outside the shelf zooms out (`zoomOut`). Clicking a book still opens its article. The click handler is delegated on
+  `#hero-shelves`; in the library page the brass plate still filters to that folder instead.
 - Because the walls are tilted, hover cards inside them would be skewed: in the hero the books show a flat tooltip (`#hero-tip`,
   `Library.initHeroTip`) instead. Full actions (To read, move, delete) live in the library.
 - Below it (`#welcome-more`) is the old start content: heading, Choose a PDF / Open my library / Reading list, Continue card.

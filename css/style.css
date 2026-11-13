@@ -948,3 +948,19 @@ body.resizing .r-body { transition: none; }
 .pcase .shelf-label, .pcase.right .shelf-label { height: calc(30 * var(--u)); min-height: 13px; }
 .pcase .case-name, .hero-room .pcase .case-name { font-size: max(9px, calc(17 * var(--u))); }
 .pcase .case-n, .hero-room .pcase .case-n { font-size: max(8px, calc(13 * var(--u))); }
+
+/* one continuous bookcase: neighbouring bays share a single post (their side columns coincide), and at the corner the frames cross on the mitre line */
+.hero-room .run .pcase + .pcase { margin-left: calc(-220 * var(--u)); }
+.hero-room .run .pcase + .pcase .pcase-front { transform: translateZ(calc(var(--cd) + 1px)); }
+.hero-room .wall.left .pcase:last-child { margin-right: calc(60 * var(--u)); }
+.hero-room .wall.right .pcase:first-child { margin-left: calc(60 * var(--u)); }
+.hero-room .wall.right .run .pcase + .pcase { margin-left: calc(-220 * var(--u)); }
+
+
+/* click a shelf in the hero to zoom in on it */
+.hero-room .pslot { cursor: zoom-in; }
+.hero.zoomed .pslot { cursor: default; }
+.hero-room .book { cursor: pointer; }
+.hero-back { position: absolute; top: 20px; left: 24px; z-index: 6; box-shadow: 0 4px 14px rgb(0 0 0 / .4); }
+.hero.zoomed .hero-down, .hero.zoomed .hero-lamp, .hero.zoomed .hero-light { opacity: 0; pointer-events: none; transition: opacity .5s; }
+.hero-lamp, .hero-light { transition: opacity .5s; }

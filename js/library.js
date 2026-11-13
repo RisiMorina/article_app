@@ -84,6 +84,7 @@ const Library = {
     const slots = this._slotsFor(shelves);
     const per = this.SLOTS.length;
     const box = $('#hero-shelves');
+    $('.hero').classList.remove('zoomed'); $('#hero-back').hidden = true; this._zoomSlot = null;
     const vh = window.innerHeight, vw = window.innerWidth;
     const PW = 560;                                        // photo width in px before the room is scaled to fit
     box.classList.toggle('intro', !this._heroShown);
@@ -111,6 +112,46 @@ const Library = {
       if (!isFinite(f) || f >= 1) break;
       rs *= f * 0.98;
     }
+  },
+
+  /** Click a shelf in the hero: turn the room so that wall faces you and zoom in on the shelf. */
+  zoomTo(slotEl) {
+    const hero = $('.hero'), box = $('#hero-shelves'), stage = $('.stage', box);
+    if (!stage || hero.classList.contains('zoomed')) return;
+    const left = !!slotEl.closest('.wall.left');
+    const a = left ? -45 : 45;                       // turn the stage so the clicked wall faces the viewer
+    const rs = parseFloat(getComputedStyle(box).getPropertyValue('--rs')) || 1;
+    const books = $('.books', slotEl);
+    stage.style.transition = 'none';
+    stage.style.transform = 'none';
+    const s0 = stage.getBoundingClientRect(), O = { x: s0.left + s0.width / 2, y: s0.top + s0.height / 2 };
+    stage.style.transform = `scale(${rs}) rotateY(${a}deg)`;
+    const q = books.getBoundingClientRect(), Q = { x: q.left + q.width / 2, y: q.top + q.height / 2 };
+    const hr = hero.getBoundingClientRect(), C = { x: hr.left + hr.width / 2, y: hr.top + hr.height / 2 };
+    const k = Math.min(Math.max(Math.min(hr.width * 0.62, 1100) / Math.max(q.width, 1), 1), 6);
+    const tx = C.x - O.x - k * (Q.x - O.x), ty = C.y - O.y - k * (Q.y - O.y);
+    stage.style.transform = `scale(${rs})`;
+    void stage.offsetWidth;                           // start the animation from the room view
+    stage.style.transition = prefersReducedMotion() ? 'none' : 'transform .95s cubic-bezier(.55, 0, .15, 1)';
+    stage.style.transform = `translate(${tx}px, ${ty}px) scale(${rs * k}) rotateY(${a}deg)`;
+    hero.classList.add('zoomed');
+    $('#hero-back').hidden = false;
+    $('#hero-tip').hidden = true;
+    this._zoomSlot = slotEl;
+  },
+
+  zoomOut() {
+    const hero = $('.hero'), box = $('#hero-shelves'), stage = $('.stage', box);
+    if (!stage || !hero.classList.contains('zoomed')) return;
+    const rs = parseFloat(getComputedStyle(box).getPropertyValue('--rs')) || 1;
+    hero.classList.remove('zoomed');
+    $('#hero-back').hidden = true;
+    $('#hero-tip').hidden = true;
+    this._zoomSlot = null;
+    stage.style.transition = prefersReducedMotion() ? 'none' : 'transform .85s cubic-bezier(.55, 0, .15, 1)';
+    stage.style.transform = `scale(${rs})`;
+    const done = () => { stage.style.transition = ''; stage.style.transform = ''; };
+    if (prefersReducedMotion()) done(); else stage.addEventListener('transitionend', done, { once: true });
   },
 
   /** Flat tooltip for hero books (the cabinets are tilted in 3D, so a card inside them would be skewed). */
@@ -277,12 +318,12 @@ const Library = {
     const label = !s.title ? null : h('div', { class: 'shelf-label' },
       h('button', {
         type: 'button', class: 'case-name', text: s.title, title: 'Show only this shelf',
-        onclick: () => { this.filter = s.title === 'Reading list' && s.folder === undefined ? 'toread' : s.folder ? 'folder:' + s.folder : this.folders.length ? 'unsorted' : 'all'; this.render(); }
+        onclick: () => { if (!$('#view-welcome').hidden) return; this.filter = s.title === 'Reading list' && s.folder === undefined ? 'toread' : s.folder ? 'folder:' + s.folder : this.folders.length ? 'unsorted' : 'all'; this.render(); }
       }),
       h('span', { class: 'case-n', text: `${s.count} ${s.count === 1 ? 'book' : 'books'}` }));
     const empty = !s.blank && s.first && !s.count;
     const el = h('div', {
-      class: 'pslot', style: { bottom: ((C.h - g.floor) / C.h * 100) + '%', height: (g.h / C.h * 100) + '%' }
+      class: 'pslot', dataset: s.blank ? { blank: '1' } : {}, style: { bottom: ((C.h - g.floor) / C.h * 100) + '%', height: (g.h / C.h * 100) + '%' }
     },
       label,
       h('ul', { class: 'books', style: { left: (C.left / C.w * 100) + '%', width: (C.inner / C.w * 100) + '%' } },
@@ -534,6 +575,16 @@ const Library = {
     $('#search').addEventListener('input', e => { this.query = e.target.value; this.render(); });
     window.addEventListener('resize', debounce(() => { if (!$('#view-welcome').hidden || !$('#view-library').hidden) this._refreshView(); }, 200));
     this.initHeroTip();
+    $('#hero-shelves').addEventListener('click', e => {
+      if (e.target.closest('.book')) return;                  // a book opens its article
+      const slot = e.target.closest('.pslot');
+      const zoomed = $('.hero').classList.contains('zoomed');
+      if (!slot || slot.dataset.blank) { if (zoomed) this.zoomOut(); return; }
+      if (zoomed) { if (slot !== this._zoomSlot) this.zoomOut(); return; }
+      this.zoomTo(slot);
+    });
+    $('#hero-back').addEventListener('click', () => this.zoomOut());
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') this.zoomOut(); });
     $('#hero-down').addEventListener('click', e => { e.preventDefault(); $('#welcome-more').scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth' }); });
     $('#btn-folder-new').addEventListener('click', () => this.newFolder());
     $('#btn-folder-rename').addEventListener('click', () => this.renameFolder());

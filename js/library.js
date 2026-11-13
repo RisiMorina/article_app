@@ -589,6 +589,12 @@ const Library = {
     $('#search').addEventListener('input', e => { this.query = e.target.value; this.render(); });
     window.addEventListener('resize', debounce(() => { if (!$('#view-welcome').hidden || !$('#view-library').hidden) this._refreshView(); }, 200));
     this.initHeroTip();
+    // In 3D the pointer often lands on the book itself rather than its spine link, so a click anywhere on a book (not its card) opens it.
+    for (const sel of ['#shelves', '#hero-shelves']) $(sel).addEventListener('click', e => {
+      const book = e.target.closest('.book');
+      if (!book || e.target.closest('a, button, select, .book-card') || e.defaultPrevented) return;
+      location.hash = '#/article/' + encodeURIComponent(book.dataset.id);
+    });
     $('#hero-shelves').addEventListener('click', e => {
       if (e.target.closest('.book')) return;                  // a book opens its article
       const slot = e.target.closest('.pslot');

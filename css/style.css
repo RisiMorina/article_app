@@ -542,6 +542,8 @@ body.resizing .r-body { transition: none; }
 .book { filter: drop-shadow(2px 3px 3px rgb(0 0 0 / .55)); position: relative; flex: none; width: var(--bw); height: var(--bh); transition: transform .22s cubic-bezier(.3, .7, .2, 1); }
 .book:hover, .book:focus-within { transform: translateY(-14px); z-index: 6; }
 .book.dragging { opacity: .35; }
+.book { cursor: pointer; }   /* the whole book opens its article, not only the spine link */
+.book-card { cursor: default; }
 .spine {
   position: absolute; inset: 0; display: block; padding: 18px 0 18px; border-radius: 3px 3px 0 0; color: var(--fg); text-decoration: none;
   background:

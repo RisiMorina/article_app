@@ -95,9 +95,19 @@ const Library = {
       h('div', { class: 'floor', 'aria-hidden': 'true' }, h('div', { class: 'rug' })),
       left, right));
     $$('.book', box).forEach((b, i) => b.style.setProperty('--i', i));
-    // Fit the whole room on the first screen (the outer edges come closer in perspective, so leave 50% room).
+    // Fit the cases on the first screen. Perspective makes the near parts bigger, so measure the real, projected size and shrink until it fits.
     const sh = $('.stage', box).offsetHeight || 900;
-    box.style.setProperty('--rs', Math.min(1, vw / 1250, (vh - 40) / (sh * 1.3)).toFixed(3));
+    let rs = Math.min(1, vw / 1250, (vh - 40) / (sh * 1.5));
+    const hero = box.closest('.hero');
+    for (let i = 0; i < 4; i++) {
+      box.style.setProperty('--rs', rs.toFixed(3));
+      const hr = hero.getBoundingClientRect();
+      let top = Infinity, bottom = -Infinity;
+      $$('.pcase-front', box).forEach(el => { const r = el.getBoundingClientRect(); top = Math.min(top, r.top); bottom = Math.max(bottom, r.bottom); });
+      const room = hr.height - 110, used = bottom - top;       // leave space for the lamp above and the chevron below
+      if (!isFinite(used) || used <= room) break;
+      rs *= (room / used) * 0.98;
+    }
   },
 
   /** Flat tooltip for hero books (the cabinets are tilted in 3D, so a card inside them would be skewed). */

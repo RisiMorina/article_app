@@ -82,6 +82,9 @@ highlights: [{ id, page, text, rects: [{x,y,w,h}], color, note, createdAt, updat
   perspective on `.hero-room`). Wallpaper, crown molding, a wooden floor (a plane cut to a wedge) with a rug, and a pendant
   lamp with a warm glow make it read as a library. Shelves are padded with unlabelled empty ones up to 6.
   `Library.renderHero` scales books (`--k`) and the whole room (`--rs`) so it fits the screen. A small chevron scrolls down.
+- The two cases are 150 units deep and each keeps that distance from the corner (`.hero-room .wall.left .pcase { margin-right: var(--cd) }`), so they
+  do not run into each other. `renderHero` fits the room by **measuring** the projected size of `.pcase-front` and shrinking `--rs` until it fits
+  between the lamp and the chevron (perspective makes the near parts bigger than a formula predicts). Test at wide, short windows like 1850x880.
 - Because the walls are tilted, hover cards inside them would be skewed: in the hero the books show a flat tooltip (`#hero-tip`,
   `Library.initHeroTip`) instead. Full actions (To read, move, delete) live in the library.
 - Below it (`#welcome-more`) is the old start content: heading, Choose a PDF / Open my library / Reading list, Continue card.

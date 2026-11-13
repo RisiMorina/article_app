@@ -908,3 +908,8 @@ body.resizing .r-body { transition: none; }
 #shelves { perspective: 1700px; perspective-origin: 92% 25%; }
 .pcase .shelf-label { transform: translateZ(calc(var(--cd) * -1)); }
 .pcase .spine-title { max-height: 46%; padding: calc(4 * var(--u)) calc(2 * var(--u)); background: rgb(22 12 6 / .62); font-size: max(7px, calc(12 * var(--u))); }
+
+/* the two cases must not run into each other at the corner: each keeps its own depth away from it */
+.hero-room .wall { width: calc(560px + 112px + 96px); }
+.hero-room .wall.left .pcase { margin-right: var(--cd); }
+.hero-room .wall.right .pcase { margin-left: var(--cd); }

@@ -14,7 +14,7 @@ css/style.css     all styles. Theme tokens at the top (light, dark, auto via dat
 js/util.js        DOM helper h(), ids, debounce, icons, toast(), confirmDialog()
 js/db.js          IndexedDB wrapper (DB), newArticle(), displayTitle(), Autosave (debounced save + "Saved")
 js/settings.js    colour names (stored in IndexedDB, travel with backups) and theme (localStorage)
-js/library.js     start screen + library: list, search, upload (button / drop zone / whole-window drop), delete
+js/library.js     start screen + library: reading list, folders, list, search, upload (button / drop zone / whole-window drop), delete
 js/reader.js      PDF.js loading, lazy page rendering, text layer, zoom, page counter, highlight overlay layer
 js/highlighter.js selection -> highlights, floating toolbar, Ctrl/Cmd+H, click on a highlight
 js/notes.js       sidebar: Highlights tab, About tab, questions, tabs, resizable/collapsible panel
@@ -33,11 +33,14 @@ and `PDFJS_BASE` in `js/reader.js`.
 - `articles` (key `id`): one record per article, everything except the PDF bytes.
 - `files` (key `id` = article id): `{ id, data: ArrayBuffer }`, the PDF itself. Kept separate so the library never loads big files.
   Stored as ArrayBuffer, not Blob, because some engines (and older Safari) cannot store Blobs in IndexedDB.
-- `settings` (key `key`): `{ key: 'colorLabels', value: { yellow, green, blue, pink } }`.
+- `settings` (key `key`): `{ key: 'colorLabels', value: { yellow, green, blue, pink } }` and
+  `{ key: 'folders', value: ['Methods', 'Climate', ...] }` (folder names, in creation order). Both travel with backups.
 
 Article record:
 ```
 id, fileName, addedAt, updatedAt, numPages, hasText (null | true | false)
+folder:     string                     // folder name, '' = no folder (old records have no field: treat as '')
+toRead:     boolean                    // on the reading list (old records: undefined = false)
 view:       { page, scale }            // last page; scale null = "fit width"
 info:       { title, authors, year, source, link, tags: string[] }
 summary, freeNotes: string
@@ -51,6 +54,14 @@ highlights: [{ id, page, text, rects: [{x,y,w,h}], color, note, createdAt, updat
 - A selection that spans two pages becomes **one highlight per page** (each with its own text and note).
 - `hasText: false` means the PDF has no text layer (a scan): the app shows a banner and highlighting is disabled.
 - Display title = `info.title`, falling back to the file name without `.pdf`.
+
+## Reading list and folders
+- The library has a left column: All articles, Reading list, one entry per folder (with counts) and "No folder".
+  `Library.filter` is `all | toread | unsorted | folder:<name>`. The start screen shows a "Reading list (n)" button.
+- Adding PDFs inside the library does **not** open the reader: they go on the reading list (`toRead: true`) and into the
+  folder that is open. Only the start screen's "Choose a PDF" with one file still opens the reader straight away.
+- Each row has a folder select (with "New folder…") and a "To read" toggle. Folders are created/renamed/deleted in the
+  library; deleting a folder keeps its articles (they become "No folder"). Names are unique, case-insensitive.
 
 ## How things work
 - Pages are placeholders sized from the real page sizes. An IntersectionObserver renders canvas + text layer

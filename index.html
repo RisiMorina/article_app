@@ -39,6 +39,7 @@
       <div class="welcome-actions">
         <button type="button" class="btn primary big" id="welcome-open">Choose a PDF</button>
         <a class="btn big" id="welcome-library" href="#/library">Open my library</a>
+        <a class="btn big" id="welcome-toread" href="#/library" hidden>Reading list</a>
       </div>
       <p class="hint">or drop a PDF anywhere on this page</p>
       <a id="welcome-continue" class="continue" href="#/library" hidden>
@@ -69,21 +70,37 @@
       </div>
     </header>
 
-    <div class="lib-bar">
-      <label class="sr-only" for="search">Search articles</label>
-      <input type="search" id="search" placeholder="Search title, author or notes" autocomplete="off">
-      <button type="button" class="btn primary" id="btn-upload">Add PDF</button>
-      <input type="file" id="file-input" accept="application/pdf,.pdf" multiple hidden>
-    </div>
+    <div class="lib-layout">
+      <nav class="folders" aria-label="Reading list and folders">
+        <ul id="folder-nav" class="folder-nav"></ul>
+        <button type="button" class="btn ghost folder-new" id="btn-folder-new"><span data-icon="plus"></span>New folder</button>
+      </nav>
 
-    <div id="dropzone" class="dropzone" role="button" tabindex="0">
-      <strong>Drop a PDF here</strong>
-      <span>or click to choose a file</span>
-    </div>
+      <div class="lib-main">
+        <div class="lib-bar">
+          <label class="sr-only" for="search">Search articles</label>
+          <input type="search" id="search" placeholder="Search title, author or notes" autocomplete="off">
+          <button type="button" class="btn primary" id="btn-upload">Add PDF</button>
+          <input type="file" id="file-input" accept="application/pdf,.pdf" multiple hidden>
+        </div>
 
-    <p id="lib-count" class="lib-count" aria-live="polite"></p>
-    <ul id="article-list" class="article-list"></ul>
-    <p id="lib-empty" class="lib-empty" hidden></p>
+        <div id="dropzone" class="dropzone" role="button" tabindex="0">
+          <strong>Drop a PDF here</strong>
+          <span>or click to choose a file. It goes on your reading list.</span>
+        </div>
+
+        <div class="lib-title-row">
+          <h2 id="lib-view-title" class="lib-view-title"></h2>
+          <span id="folder-tools" class="folder-tools" hidden>
+            <button type="button" class="btn ghost small" id="btn-folder-rename">Rename</button>
+            <button type="button" class="btn ghost small" id="btn-folder-delete">Delete folder</button>
+          </span>
+          <p id="lib-count" class="lib-count" aria-live="polite"></p>
+        </div>
+        <ul id="article-list" class="article-list"></ul>
+        <p id="lib-empty" class="lib-empty" hidden></p>
+      </div>
+    </div>
   </main>
 
   <!-- ============ READER ============ -->
@@ -198,7 +215,19 @@
   </form>
 </dialog>
 
-<dialog id="dlg-settings" class="dlg wide" aria-labelledby="settings-title">
+<dialog id="dlg-folder" class="dlg" aria-labelledby="folder-dlg-title">
+  <form method="dialog" id="folder-form">
+    <h2 id="folder-dlg-title">New folder</h2>
+    <div class="field"><label for="folder-name">Name</label><input id="folder-name" type="text" maxlength="40" autocomplete="off" placeholder="For example: Methods, Climate, Thesis"></div>
+    <p id="folder-error" class="field-error" role="alert" hidden></p>
+    <div class="dlg-actions">
+      <button type="button" class="btn" id="folder-cancel">Cancel</button>
+      <button type="submit" class="btn primary" id="folder-ok">Create folder</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlg-settings"class="dlg wide" aria-labelledby="settings-title">
   <form method="dialog">
     <h2 id="settings-title">Settings</h2>
     <fieldset>

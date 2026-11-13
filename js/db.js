@@ -76,6 +76,8 @@ function newArticle(fileName, numPages) {
     addedAt: now,
     updatedAt: now,
     numPages: numPages || null,
+    folder: '',                    // folder name, '' = unsorted
+    toRead: false,                 // on the reading list
     hasText: null,                 // null = not checked yet, false = scan without text layer
     view: { page: 1, scale: null },
     info: { title: '', authors: '', year: '', source: '', link: '', tags: [] },

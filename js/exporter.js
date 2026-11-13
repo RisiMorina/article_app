@@ -121,7 +121,7 @@ const Exporter = {
         const blob = await DB.getFile(a.id);
         out.push({ ...a, pdfBase64: blob ? await this.blobToBase64(blob) : null });
       }
-      const data = { format: 'marginalia-backup', version: 1, exportedAt: new Date().toISOString(), settings: { colorLabels: Settings.labels }, articles: out };
+      const data = { format: 'marginalia-backup', version: 1, exportedAt: new Date().toISOString(), settings: { colorLabels: Settings.labels, folders: await DB.getSetting('folders', []) }, articles: out };
       const stamp = new Date().toISOString().slice(0, 10);
       downloadBlob(new Blob([JSON.stringify(data)], { type: 'application/json' }), `marginalia-backup-${stamp}.json`);
       close();
@@ -152,6 +152,11 @@ const Exporter = {
         added++;
       }
       if (data.settings && data.settings.colorLabels && Settings.isDefault()) await Settings.replaceLabels(data.settings.colorLabels);
+      if (data.settings && Array.isArray(data.settings.folders)) {
+        const mine = await DB.getSetting('folders', []);
+        const extra = data.settings.folders.filter(f => typeof f === 'string' && f && !mine.some(m => m.toLowerCase() === f.toLowerCase()));
+        if (extra.length) await DB.setSetting('folders', [...mine, ...extra]);
+      }
     } catch (err) {
       console.error(err);
       close();

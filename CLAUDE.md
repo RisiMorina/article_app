@@ -61,11 +61,13 @@ highlights: [{ id, page, text, rects: [{x,y,w,h}], color, note, createdAt, updat
   `Library.filter` is `all | toread | unsorted | folder:<name>`. The start screen shows a "Reading list (n)" button.
 - Adding PDFs inside the library does **not** open the reader: they go on the reading list (`toRead: true`) and into the
   folder that is open. Only the start screen's "Choose a PDF" with one file still opens the reader straight away.
-- The library is drawn as **bookcases**: one case per folder (plus "No folder"), one book spine per article, with the
-  title on the spine. Thickness follows the page count, colour and height come from a hash of the id. A bookmark
-  ribbon on a spine means "To read". Books wrap onto more shelves when a row is full (`Library._case`, re-rendered on
-  resize). Drag a book onto another case to move it. Hovering or focusing a book lifts it and shows a card with the
-  title, details, the "To read" toggle, a folder select (with "New folder…") and delete. Clicking the spine opens it.
+- The library is drawn as **one bookcase**: every folder is a shelf (plus "No folder"), labelled beside the case with a short
+  line pointing at it. With 7 or more shelves it becomes **two cases standing in a corner** (`.cabinets.two`, CSS 3D
+  tilt, labels of the right case on its right). Each article is a book spine with its title. Thickness follows the page
+  count, colour and height come from a hash of the id. A bookmark ribbon on a spine means "To read". A shelf wraps onto an
+  extra board when full (`Library._shelf`, re-rendered on resize). Drag a book onto another shelf to move it. Hovering or
+  focusing a book lifts it and shows a card with the title, details, the "To read" toggle, a folder select (with
+  "New folder…") and delete. Clicking the spine opens it.
 - (Old list rows are gone; `.art*` CSS is unused.) Folder select and "To read" toggle: Folders are created/renamed/deleted in the
   library; deleting a folder keeps its articles (they become "No folder"). Names are unique, case-insensitive.
 

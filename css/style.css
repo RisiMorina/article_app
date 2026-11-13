@@ -476,27 +476,41 @@ body.resizing .r-body { transition: none; }
 .sheet { border-radius: 10px; }
 .mark { border-radius: 9px; }
 
-/* bookcases: one per folder, one book per article */
-.shelves { --wood: color-mix(in srgb, #b4824f 78%, var(--surface)); --frame: color-mix(in srgb, #6e4a2a 82%, var(--surface)); --back: color-mix(in srgb, #8b6540 16%, var(--bg)); margin-top: 8px; }
-.case { margin-bottom: 44px; }
-.case-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 10px; }
-.case-name { padding: 0; border: 0; background: none; font-size: 19px; font-weight: 650; letter-spacing: -.01em; color: var(--ink); text-align: left; }
-.case-name:hover { color: var(--accent); }
-.case-n { color: var(--muted); font-size: 13px; }
-.case-frame {
-  padding: 0 16px; border: solid var(--frame); border-width: 12px 14px 0; border-radius: 6px 6px 0 0;
-  background: var(--back); box-shadow: inset 0 14px 18px -12px rgb(0 0 0 / .35), inset 0 0 0 1px rgb(0 0 0 / .06); transition: box-shadow .2s, background-color .2s;
+/* bookcase: one shelf per folder, one book per article */
+.shelves { --wood: color-mix(in srgb, #b4824f 78%, var(--surface)); --frame: color-mix(in srgb, #6e4a2a 82%, var(--surface)); --back: color-mix(in srgb, #8b6540 16%, var(--bg)); --gutter: 128px; margin-top: 14px; }
+.cabinets { perspective: 2200px; }
+.cabinet { margin-left: var(--gutter); }
+.cabinets.two { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; margin: 14px var(--gutter) 0; }
+.cabinets.two .cabinet { margin: 0; }
+/* two cases standing in a corner: both lean away from the middle */
+.cabinets.two .cabinet.left { transform: rotateY(-9deg); transform-origin: right center; }
+.cabinets.two .cabinet.right { transform: rotateY(9deg); transform-origin: left center; }
+.cabinet-frame {
+  padding: 0 16px; border: solid var(--frame); border-width: 14px 14px 0; border-radius: 6px 6px 0 0;
+  background: var(--back); box-shadow: inset 0 14px 18px -12px rgb(0 0 0 / .35), inset 0 0 0 1px rgb(0 0 0 / .06);
 }
-.case.drop .case-frame { box-shadow: inset 0 0 0 3px var(--accent); }
+.shelf { transition: box-shadow .2s; }
+.shelf.drop { box-shadow: inset 0 0 0 3px var(--accent); }
 .shelf-row { position: relative; padding-top: 34px; }
-.shelf-row + .shelf-row { margin-top: 0; }
+.shelf-row.is-empty { padding-top: 12px; }
 .books { list-style: none; margin: 0; padding: 0 4px; display: flex; align-items: flex-end; gap: 3px; min-height: 176px; }
+.is-empty .books { min-height: 84px; }
 .plank {
   height: 16px; margin: 0 -16px; background: linear-gradient(var(--wood), color-mix(in srgb, var(--wood) 82%, #000));
   box-shadow: 0 -2px 0 color-mix(in srgb, var(--wood) 70%, #fff) inset, 0 5px 10px -6px rgb(0 0 0 / .45);
 }
-.case-frame > .shelf-row:last-child .plank { margin: 0 -16px -0px; border-radius: 0 0 3px 3px; height: 20px; }
-.shelf-empty { align-self: center; padding: 0 8px 28px; color: var(--muted); font-size: 14px; }
+.cabinet-frame > .shelf:last-child > .shelf-row:last-child .plank { height: 22px; margin: 0 -16px; border-radius: 0 0 3px 3px; }
+.shelf-empty { align-self: center; padding: 0 8px 12px; color: var(--muted); font-size: 14px; }
+
+/* the shelf's name stands beside the bookcase, with a short line pointing at the shelf */
+.shelf-label { position: absolute; bottom: 30px; right: calc(100% + 40px); width: 104px; display: flex; flex-direction: column; align-items: flex-end; text-align: right; }
+.shelf-label::after { content: ""; position: absolute; top: 12px; left: calc(100% + 6px); width: 26px; height: 2px; border-radius: 1px; background: var(--line-strong); }
+.cabinet.right .shelf-label { right: auto; left: calc(100% + 40px); align-items: flex-start; text-align: left; }
+.cabinet.right .shelf-label::after { left: auto; right: calc(100% + 6px); }
+.is-empty .shelf-label { bottom: 24px; }
+.case-name { padding: 0; border: 0; background: none; font-size: 16px; font-weight: 650; letter-spacing: -.01em; color: var(--ink); text-align: inherit; overflow-wrap: anywhere; line-height: 1.2; }
+.case-name:hover { color: var(--accent); }
+.case-n { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
 
 .book { position: relative; flex: none; width: var(--bw); height: var(--bh); transition: transform .22s cubic-bezier(.3, .7, .2, 1); }
 .book:hover, .book:focus-within { transform: translateY(-14px); z-index: 6; }

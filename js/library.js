@@ -128,7 +128,7 @@ const Library = {
     }
   },
 
-  /** The bookcases to draw for the current view: [{ title, folder (undefined = no drop), books }]. */
+  /** Shelves to draw for the current view: [{ title, folder (undefined = no drop), books }]. One shelf per folder. */
   _cases(q) {
     const f = this.filter, all = this.articles;
     let cases;
@@ -148,14 +148,22 @@ const Library = {
     this.renderNav();
     const q = this.query.trim().toLowerCase();
     const inView = this.articles.filter(a => this._inView(a));
-    const cases = this._cases(q);
-    const shownCount = cases.reduce((n, c) => n + c.books.length, 0);
+    const shelves = this._cases(q);
+    const shownCount = shelves.reduce((n, c) => n + c.books.length, 0);
 
     $('#lib-view-title').textContent = this._viewTitle();
     $('#folder-tools').hidden = !this.filter.startsWith('folder:');
 
-    const width = Math.max(($('#shelves').clientWidth || 760) - 2 * 28, 200);
-    $('#shelves').replaceChildren(...cases.map(c => this._case(c, width)));
+    // One bookcase holds every shelf. With many folders it becomes two cases standing in a corner.
+    const W = $('#shelves').clientWidth || 760;
+    const GUTTER = 128, FRAME = 28 + 32 + 8;
+    const two = shelves.length >= 7;
+    const groups = two ? [shelves.slice(0, Math.ceil(shelves.length / 2)), shelves.slice(Math.ceil(shelves.length / 2))] : [shelves];
+    const colW = two ? (W - 2 * GUTTER - 28) / 2 : W - GUTTER;
+    const inner = Math.max(colW - FRAME, 180);
+    const box = $('#shelves');
+    box.className = 'shelves cabinets' + (two ? ' two' : '');
+    box.replaceChildren(...groups.map((g, i) => this._cabinet(g, inner, two ? (i ? 'right' : 'left') : 'left')));
 
     const empty = $('#lib-empty');
     empty.hidden = shownCount > 0 || (!q && this.filter !== 'toread' && !!this.articles.length);
@@ -170,11 +178,16 @@ const Library = {
       : '';
   },
 
-  /* ---------- bookcases ---------- */
+  /* ---------- bookcase ---------- */
   _hash(s) { let n = 0; for (let i = 0; i < s.length; i++) n = (n * 31 + s.charCodeAt(i)) >>> 0; return n; },
 
-  /** One bookcase = one folder. Books are split over shelves that fit the width. */
-  _case(c, width) {
+  _cabinet(shelves, width, side) {
+    return h('div', { class: 'cabinet ' + side },
+      h('div', { class: 'cabinet-frame' }, ...shelves.map(s => this._shelf(s, width, side))));
+  },
+
+  /** One shelf = one folder, labelled beside the bookcase. Books wrap onto an extra board when a row is full. */
+  _shelf(c, width, side) {
     const rows = [[]];
     let used = 0;
     for (const a of c.books) {
@@ -184,19 +197,19 @@ const Library = {
       used += w + 3;
     }
     const droppable = c.folder !== undefined;
-    const el = h('section', { class: 'case', 'aria-label': c.title },
-      h('div', { class: 'case-head' },
-        h('button', {
-          type: 'button', class: 'case-name', text: c.title, title: 'Open this bookcase',
-          onclick: () => { this.filter = c.title === 'Reading list' ? 'toread' : c.folder ? 'folder:' + c.folder : c.folder === '' && this.folders.length ? 'unsorted' : 'all'; this.render(); }
-        }),
-        h('span', { class: 'case-n', text: `${c.books.length} ${c.books.length === 1 ? 'book' : 'books'}` })),
-      h('div', { class: 'case-frame' },
-        ...rows.map(r => h('div', { class: 'shelf-row' },
-          h('ul', { class: 'books' },
-            ...r.map(({ a, x }) => this._book(a, x > width / 2)),
-            !c.books.length ? h('li', { class: 'shelf-empty', text: droppable ? 'Empty shelf. Drag a book here.' : 'Nothing on this shelf yet.' }) : null),
-          h('div', { class: 'plank', 'aria-hidden': 'true' })))));
+    const label = h('div', { class: 'shelf-label' },
+      h('button', {
+        type: 'button', class: 'case-name', text: c.title, title: 'Show only this shelf',
+        onclick: () => { this.filter = c.title === 'Reading list' && c.folder === undefined ? 'toread' : c.folder ? 'folder:' + c.folder : this.folders.length ? 'unsorted' : 'all'; this.render(); }
+      }),
+      h('span', { class: 'case-n', text: `${c.books.length} ${c.books.length === 1 ? 'book' : 'books'}` }));
+    const el = h('div', { class: 'shelf' },
+      ...rows.map((r, i) => h('div', { class: 'shelf-row' + (c.books.length ? '' : ' is-empty') },
+        i === 0 ? label : null,
+        h('ul', { class: 'books' },
+          ...r.map(({ a, x }) => this._book(a, side === 'right' || x > width / 2)),
+          !c.books.length ? h('li', { class: 'shelf-empty', text: droppable ? 'Empty. Drag a book here.' : 'Nothing here yet.' }) : null),
+        h('div', { class: 'plank', 'aria-hidden': 'true' }))));
     if (droppable) {
       el.addEventListener('dragover', e => {
         if (!Array.from(e.dataTransfer.types || []).includes('text/x-article')) return;

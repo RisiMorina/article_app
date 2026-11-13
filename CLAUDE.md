@@ -82,10 +82,12 @@ highlights: [{ id, page, text, rects: [{x,y,w,h}], color, note, createdAt, updat
   perspective on `.hero-room`). Wallpaper, crown molding, a wooden floor (a plane cut to a wedge) with a rug, and a pendant
   lamp with a warm glow make it read as a library. Shelves are padded with unlabelled empty ones up to 6.
   `Library.renderHero` scales books (`--k`) and the whole room (`--rs`) so it fits the screen. A small chevron scrolls down.
-- Each wall is a **run of bays** (`.run`): two bays per wall when the window is 1500px or wider, one otherwise (`renderHero`, `bays`), so the
-  hero shows 2 or 4 cases and the library page shows all. Neighbouring bays overlap by 112 units (shared side posts) and the last bay on each
-  wall stops 92 units short of the corner, so the front frames meet exactly on the 45 degree mitre line. The side panels that would face a
-  neighbour or the corner are hidden (`.cs-or` / `.cs-ol` rules under `.wall`).
+- **The room grows with the library** (`renderHero`): cases needed = `ceil(slots / 5)`, capped at 4. With **one case** the room is a single flat wall facing you
+  (`.hero-room.single`); with **one folder and one row of books** the hero is shown already **zoomed on that shelf** (`zoomTo(..., { locked: true })`: no Back
+  button, no zooming out). 2 cases = a corner (one bay per wall), 3 = two bays on the left wall and one on the right, 4 = two on each. Neighbouring bays overlap
+  by 220 units so their side columns coincide into one shared post (the later bay's front image is 1px further out to avoid flicker); at the corner the two
+  frames cross on the mitre line (60 units short of the corner). The side panels that would face a neighbour or the corner are hidden (`.cs-or` / `.cs-ol`
+  rules under `.wall`). More than 4 cases only show on the library page.
 - Shelf names are brass plates on the front edge of each board (`.shelf-label`, `top: 100%` of the slot, `translateZ(3px)` so it is in front of
   the frame photo), in the hero and the library page alike.
 - `renderHero` fits the room by **measuring** the projected height and width of all `.pcase-front` images and shrinking `--rs` until they fit

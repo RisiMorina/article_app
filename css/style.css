@@ -1023,3 +1023,16 @@ body.resizing .r-body { transition: none; }
     repeating-linear-gradient(90deg, #2e1f14 0 26px, transparent 26px 330px),
     repeating-linear-gradient(0deg, #2e1f14 0 26px, transparent 26px 330px),
     linear-gradient(#b9a982, #8f8160); }
+
+
+/* =========================================================
+   Growing room: with only one case it is a single flat wall facing you
+   ========================================================= */
+.hero-room.single .stage { grid-template-columns: auto; }
+.hero-room.single .wall.left { justify-self: center; transform: none; padding-left: 900px; padding-right: 900px; }
+.hero-room.single .floor, .hero-room.single .ceiling { clip-path: none; }
+.hero-room.single .wall .pcase { margin: 0; }
+.hero-room.single .wall .pcase .cs-ol, .hero-room.single .wall .pcase .cs-or { display: block; }
+.hero-room.single .wall.left::after { background: linear-gradient(90deg, rgb(0 0 0 / .3), transparent 25%, transparent 75%, rgb(0 0 0 / .3)); }
+.hero-room.single .pslot { cursor: default; }
+.hero.zoomed:has(.single) .pslot, .hero-room.single .pslot { cursor: default; }

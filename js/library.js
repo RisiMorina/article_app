@@ -84,21 +84,24 @@ const Library = {
     const slots = this._slotsFor(shelves);
     const per = this.SLOTS.length;
     const box = $('#hero-shelves');
-    $('.hero').classList.remove('zoomed'); $('#hero-back').hidden = true; this._zoomSlot = null;
+    $('.hero').classList.remove('zoomed'); $('#hero-back').hidden = true; this._zoomSlot = null; this._zoomLocked = false;
     const vh = window.innerHeight, vw = window.innerWidth;
     const PW = 560;                                        // photo width in px before the room is scaled to fit
     box.classList.toggle('intro', !this._heroShown);
     this._heroShown = true;
-    // Each wall is a run of bays: two per wall on wide screens, one on narrow ones. The hero shows the first cases; the library page shows all.
-    const bays = vw >= 1500 ? 2 : 1;
-    const mk = (from, side) => h('div', { class: 'wall ' + side },
+    // The room grows with the library: one case at first (one flat wall), then a corner, then longer runs. The hero shows at most 4 cases; the library page shows all.
+    const real = slots.filter(s => !s.blank);
+    const n = Math.min(4, Math.max(1, Math.ceil(slots.length / per)));
+    const single = n === 1;
+    box.classList.toggle('single', single);
+    const nl = single ? 1 : Math.ceil(n / 2), nr = single ? 0 : n - nl;
+    const mk = (from, count, side) => h('div', { class: 'wall ' + side },
       h('span', { class: 'dado', 'aria-hidden': 'true' }), h('span', { class: 'baseboard', 'aria-hidden': 'true' }),
-      h('div', { class: 'run' }, ...Array.from({ length: bays }, (_, i) => this._pcase(slots.slice((from + i) * per, (from + i + 1) * per), side, PW))));
-    const left = mk(0, 'left'), right = mk(bays, 'right');
+      h('div', { class: 'run' }, ...Array.from({ length: count }, (_, i) => this._pcase(slots.slice((from + i) * per, (from + i + 1) * per), side, PW))));
     box.replaceChildren(h('div', { class: 'stage' },
       h('div', { class: 'ceiling', 'aria-hidden': 'true' }),
       h('div', { class: 'floor', 'aria-hidden': 'true' }, h('div', { class: 'rug' })),
-      left, right));
+      mk(0, nl, 'left'), nr ? mk(nl, nr, 'right') : null));
     $$('.book', box).forEach((b, i) => b.style.setProperty('--i', i));
     // Fit the cases on the first screen. Perspective makes the near parts bigger, so measure the real, projected size and shrink until it fits.
     const sh = $('.stage', box).offsetHeight || 900;
@@ -114,14 +117,15 @@ const Library = {
       if (!isFinite(f) || f >= 1) break;
       rs *= f * 0.98;
     }
+    if (real.length <= 1) this.zoomTo($('.pslot', box), { instant: true, locked: true });
   },
 
   /** Click a shelf in the hero: turn the room so that wall faces you and zoom in on the shelf. */
-  zoomTo(slotEl) {
+  zoomTo(slotEl, opt = {}) {
     const hero = $('.hero'), box = $('#hero-shelves'), stage = $('.stage', box);
     if (!stage || hero.classList.contains('zoomed')) return;
     const left = !!slotEl.closest('.wall.left');
-    const a = left ? -45 : 45;                       // turn the stage so the clicked wall faces the viewer
+    const a = box.classList.contains('single') ? 0 : left ? -45 : 45;   // turn the stage so the clicked wall faces the viewer
     const rs = parseFloat(getComputedStyle(box).getPropertyValue('--rs')) || 1;
     const books = $('.books', slotEl);
     stage.style.transition = 'none';
@@ -134,17 +138,18 @@ const Library = {
     const tx = C.x - O.x - k * (Q.x - O.x), ty = C.y - O.y - k * (Q.y - O.y);
     stage.style.transform = `scale(${rs})`;
     void stage.offsetWidth;                           // start the animation from the room view
-    stage.style.transition = prefersReducedMotion() ? 'none' : 'transform .95s cubic-bezier(.55, 0, .15, 1)';
+    stage.style.transition = opt.instant || prefersReducedMotion() ? 'none' : 'transform .95s cubic-bezier(.55, 0, .15, 1)';
     stage.style.transform = `translate(${tx}px, ${ty}px) scale(${rs * k}) rotateY(${a}deg)`;
     hero.classList.add('zoomed');
-    $('#hero-back').hidden = false;
+    this._zoomLocked = !!opt.locked;
+    $('#hero-back').hidden = !!opt.locked;
     $('#hero-tip').hidden = true;
     this._zoomSlot = slotEl;
   },
 
   zoomOut() {
     const hero = $('.hero'), box = $('#hero-shelves'), stage = $('.stage', box);
-    if (!stage || !hero.classList.contains('zoomed')) return;
+    if (!stage || !hero.classList.contains('zoomed') || this._zoomLocked) return;
     const rs = parseFloat(getComputedStyle(box).getPropertyValue('--rs')) || 1;
     hero.classList.remove('zoomed');
     $('#hero-back').hidden = true;

@@ -1,0 +1,1 @@
+{ "name": "marginalia-tests", "private": true, "version": "1.0.0", "description": "Playwright end-to-end test for Marginalia (dev only, not part of the deployed site)", "scripts": { "test": "node e2e.js" }, "devDependencies": { "playwright": "1.49.1" } }

@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en" data-theme="auto">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Marginalia: read and annotate PDFs</title>
+  <meta name="description" content="Read academic and news articles as PDFs, highlight passages and keep structured notes. Everything stays in your browser.">
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232b5f8a'/%3E%3Crect x='6' y='11' width='20' height='7' rx='1.5' fill='%23ffe94d'/%3E%3Crect x='6' y='9' width='20' height='2.5' rx='1' fill='%23fff'/%3E%3Crect x='6' y='20' width='13' height='2.5' rx='1' fill='%23fff'/%3E%3C/svg%3E">
+  <script>
+    /* Apply the saved theme before first paint so there is no flash. */
+    try { var t = localStorage.getItem('marginalia-theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
+          var a = localStorage.getItem('marginalia-accent'); if (a) document.documentElement.dataset.accent = a; } catch (e) {}
+  </script>
+  <!-- PDF.js 3.11.174 (exact version) from jsDelivr, with integrity hashes -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/web/pdf_viewer.css"
+        integrity="sha384-AsorB5/Nsf7XYGtSnLoB8c3OBWAx5UALYr8xEpCTVHxyQBTSi45f7lrS/3Dw7STW" crossorigin="anonymous">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="small-screen" class="small-screen">
+  <div>
+    <h1>Open this on a laptop</h1>
+    <p>Marginalia needs a window at least 1024 pixels wide to show the article and your notes side by side.</p>
+  </div>
+</div>
+
+<div id="app">
+
+  <!-- ============ WELCOME ============ -->
+  <main id="view-welcome" class="welcome" hidden aria-labelledby="welcome-title">
+    <button type="button" class="btn ghost icon-only welcome-settings" id="btn-settings-welcome" aria-label="Settings" title="Settings"></button>
+    <div class="welcome-copy">
+      <p class="brand"><span class="mark" aria-hidden="true"></span>Marginalia</p>
+      <p id="greet" class="greet" hidden></p>
+      <h1 id="welcome-title">Do you want to work on an article?</h1>
+      <p class="lead">Open a PDF, highlight what matters and write down what you think. Everything stays in this browser.</p>
+      <div class="welcome-actions">
+        <button type="button" class="btn primary big" id="welcome-open">Choose a PDF</button>
+        <a class="btn big" id="welcome-library" href="#/library">Open my library</a>
+      </div>
+      <p class="hint">or drop a PDF anywhere on this page</p>
+      <a id="welcome-continue" class="continue" href="#/library" hidden>
+        <span class="continue-thumb" aria-hidden="true"></span>
+        <span class="continue-text"><small>Pick up where you left off</small><strong id="continue-title"></strong></span>
+        <span class="continue-go" aria-hidden="true">Continue</span>
+      </a>
+    </div>
+    <div class="sheet" aria-hidden="true">
+      <span class="sheet-title"></span>
+      <span class="ln l1"></span><span class="ln l2"></span>
+      <span class="ln l3 hl hl-y"></span><span class="ln l4 hl hl-y"></span>
+      <span class="ln l5"></span><span class="ln l6"></span>
+      <span class="ln l7 hl hl-g"></span><span class="ln l8"></span><span class="ln l9"></span>
+      <span class="note-bubble"></span>
+    </div>
+  </main>
+
+  <!-- ============ LIBRARY ============ -->
+  <main id="view-library" class="library" hidden aria-labelledby="lib-title">
+    <header class="lib-head">
+      <h1 id="lib-title"><a class="home" href="#/" title="Back to start"><span class="mark" aria-hidden="true"></span>Marginalia</a></h1>
+      <div class="lib-actions">
+        <button type="button" class="btn ghost" id="btn-backup-export">Export backup</button>
+        <button type="button" class="btn ghost" id="btn-backup-import">Import backup</button>
+        <input type="file" id="backup-input" accept="application/json,.json" hidden>
+        <button type="button" class="btn ghost icon-only" id="btn-settings-lib" aria-label="Settings" title="Settings"></button>
+      </div>
+    </header>
+
+    <div class="lib-bar">
+      <label class="sr-only" for="search">Search articles</label>
+      <input type="search" id="search" placeholder="Search title, author or notes" autocomplete="off">
+      <button type="button" class="btn primary" id="btn-upload">Add PDF</button>
+      <input type="file" id="file-input" accept="application/pdf,.pdf" multiple hidden>
+    </div>
+
+    <div id="dropzone" class="dropzone" role="button" tabindex="0">
+      <strong>Drop a PDF here</strong>
+      <span>or click to choose a file</span>
+    </div>
+
+    <p id="lib-count" class="lib-count" aria-live="polite"></p>
+    <ul id="article-list" class="article-list"></ul>
+    <p id="lib-empty" class="lib-empty" hidden></p>
+  </main>
+
+  <!-- ============ READER ============ -->
+  <div id="view-reader" class="reader" hidden>
+    <header class="r-head">
+      <button type="button" class="btn ghost" id="btn-back"><span data-icon="arrow-left"></span>Library</button>
+      <h1 id="r-title" class="r-title"></h1>
+
+      <div class="r-tools">
+        <div class="group" role="group" aria-label="Zoom">
+          <button type="button" class="icon-btn" id="zoom-out" aria-label="Zoom out" title="Zoom out"><span data-icon="minus"></span></button>
+          <button type="button" class="zoom-level" id="zoom-level" aria-label="Fit page to width" title="Fit page to width">100%</button>
+          <button type="button" class="icon-btn" id="zoom-in" aria-label="Zoom in" title="Zoom in"><span data-icon="plus"></span></button>
+        </div>
+
+        <div class="pager">
+          <label class="sr-only" for="page-input">Page number</label>
+          <input id="page-input" type="text" inputmode="numeric" autocomplete="off" value="1">
+          <span aria-hidden="true">/</span>
+          <span id="page-total">0</span>
+        </div>
+
+        <span id="save-state" class="save-state" role="status" aria-live="polite">Saved</span>
+
+        <div class="menu-wrap">
+          <button type="button" class="btn ghost" id="btn-export" aria-haspopup="true" aria-expanded="false" aria-controls="export-menu">Export notes</button>
+          <div id="export-menu" class="menu" hidden>
+            <button type="button" id="exp-copy">Copy as Markdown</button>
+            <button type="button" id="exp-md">Download .md file</button>
+            <button type="button" id="exp-print">Print notes</button>
+          </div>
+        </div>
+        <button type="button" class="icon-btn" id="btn-settings" aria-label="Settings" title="Settings"></button>
+        <button type="button" class="icon-btn" id="btn-sidebar" aria-label="Show or hide notes panel" aria-pressed="true" aria-controls="sidebar" title="Show or hide notes panel"></button>
+      </div>
+    </header>
+
+    <div class="r-body" id="r-body">
+      <div class="pdf-scroll" id="pdf-scroll" tabindex="0" aria-label="Article pages">
+        <div id="scan-banner" class="scan-banner" role="alert" hidden>
+          <span><strong>This PDF looks like a scan.</strong> It has no text layer, so you can’t select or highlight text here. Run it through OCR first, then add it again.</span>
+          <button type="button" class="btn ghost" id="scan-dismiss">Dismiss</button>
+        </div>
+        <div id="pdf-loading" class="pdf-loading" role="status">Opening PDF…</div>
+        <div id="pages" class="pages"></div>
+      </div>
+
+      <div id="resizer" class="resizer" role="separator" aria-orientation="vertical" aria-label="Resize notes panel" aria-controls="sidebar" tabindex="0"></div>
+
+      <aside id="sidebar" class="sidebar" aria-label="Notes">
+        <div class="tabs" role="tablist" aria-label="Notes sections">
+          <button type="button" role="tab" id="tab-highlights" class="tab" aria-selected="true" aria-controls="panel-highlights">Highlights <span id="hl-count" class="tab-count">0</span></button>
+          <button type="button" role="tab" id="tab-about" class="tab" aria-selected="false" aria-controls="panel-about" tabindex="-1">About this article</button>
+        </div>
+
+        <section id="panel-highlights" class="panel" role="tabpanel" aria-labelledby="tab-highlights">
+          <div id="legend" class="legend" role="group" aria-label="Filter highlights by colour"></div>
+          <ul id="hl-list" class="hl-list"></ul>
+          <p id="hl-empty" class="empty-note" hidden>
+            Select text in the article to highlight it. Each highlight gets its own note here.
+          </p>
+        </section>
+
+        <section id="panel-about" class="panel" role="tabpanel" aria-labelledby="tab-about" hidden>
+          <form id="about-form" autocomplete="off" onsubmit="return false">
+            <h2 class="h-sec">General info</h2>
+            <div class="field"><label for="f-title">Title</label><input id="f-title" type="text" data-field="info.title"></div>
+            <div class="field"><label for="f-authors">Authors</label><input id="f-authors" type="text" data-field="info.authors"></div>
+            <div class="field-row">
+              <div class="field year"><label for="f-year">Year</label><input id="f-year" type="text" inputmode="numeric" data-field="info.year"></div>
+              <div class="field"><label for="f-source">Journal or source</label><input id="f-source" type="text" data-field="info.source"></div>
+            </div>
+            <div class="field"><label for="f-link">Link or DOI</label><input id="f-link" type="text" data-field="info.link"></div>
+            <div class="field"><label for="f-tags">Tags <span class="hint">(separate with commas)</span></label><input id="f-tags" type="text" data-field="info.tags"></div>
+
+            <h2 class="h-sec">Summary</h2>
+            <div class="field"><label class="sr-only" for="f-summary">Summary</label><textarea id="f-summary" rows="7" data-field="summary" placeholder="What is this article about, in your own words?"></textarea></div>
+
+            <h2 class="h-sec">Critical questions</h2>
+            <ol id="q-list" class="q-list"></ol>
+            <button type="button" class="btn" id="q-add"><span data-icon="plus"></span>Add a question</button>
+
+            <h2 class="h-sec">Free notes</h2>
+            <div class="field"><label class="sr-only" for="f-free">Free notes</label><textarea id="f-free" rows="7" data-field="freeNotes" placeholder="Anything else worth remembering."></textarea></div>
+          </form>
+        </section>
+      </aside>
+    </div>
+  </div>
+</div>
+
+<!-- Floating toolbar shown above a text selection -->
+<div id="sel-toolbar" class="sel-toolbar" role="toolbar" aria-label="Highlight the selected text" hidden>
+  <button type="button" class="swatch" data-color="yellow"></button>
+  <button type="button" class="swatch" data-color="green"></button>
+  <button type="button" class="swatch" data-color="blue"></button>
+  <button type="button" class="swatch" data-color="pink"></button>
+  <span class="sep" aria-hidden="true"></span>
+  <button type="button" class="tb-note" id="tb-note">Highlight + note</button>
+</div>
+
+<div id="toasts" class="toasts" role="status" aria-live="polite"></div>
+<div id="drop-overlay" class="drop-overlay" hidden><div>Drop PDF to add it to your library</div></div>
+
+<dialog id="dlg-confirm" class="dlg">
+  <form method="dialog">
+    <p id="confirm-msg"></p>
+    <div class="dlg-actions">
+      <button type="submit" value="cancel" class="btn" id="confirm-cancel">Cancel</button>
+      <button type="submit" value="ok" class="btn danger" id="confirm-ok">Delete</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlg-settings" class="dlg wide" aria-labelledby="settings-title">
+  <form method="dialog">
+    <h2 id="settings-title">Settings</h2>
+    <fieldset>
+      <legend>What each colour means to you</legend>
+      <p class="hint">These names show in the toolbar, the notes panel and exports.</p>
+      <div id="color-fields"></div>
+    </fieldset>
+    <fieldset>
+      <legend>Make it yours</legend>
+      <div class="field"><label for="user-name">Your name <span class="hint">(shown on the start screen)</span></label><input id="user-name" type="text" maxlength="30" autocomplete="off"></div>
+      <div class="accent-row" role="radiogroup" aria-label="Accent colour">
+        <label class="accent-opt" style="--sw:#7b4b94"><input type="radio" name="accent" value="plum"><span class="sw"></span>Plum</label>
+        <label class="accent-opt" style="--sw:#1f6f8b"><input type="radio" name="accent" value="sea"><span class="sw"></span>Sea</label>
+        <label class="accent-opt" style="--sw:#b0456a"><input type="radio" name="accent" value="rose"><span class="sw"></span>Rose</label>
+        <label class="accent-opt" style="--sw:#3c7a55"><input type="radio" name="accent" value="forest"><span class="sw"></span>Forest</label>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>Appearance</legend>
+      <div class="radio-row" role="radiogroup" aria-label="Theme">
+        <label><input type="radio" name="theme" value="auto"> Match my system</label>
+        <label><input type="radio" name="theme" value="light"> Light</label>
+        <label><input type="radio" name="theme" value="dark"> Dark</label>
+      </div>
+    </fieldset>
+    <div class="dlg-actions"><button type="submit" class="btn primary" id="settings-close">Done</button></div>
+  </form>
+</dialog>
+
+<!-- Filled with the current article’s notes when printing -->
+<div id="print-root" aria-hidden="true"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"
+        integrity="sha384-/1qUCSGwTur9vjf/z9lmu/eCUYbpOTgSjmpbMQZ1/CtX2v/WcAIKqRv+U1DUCG6e" crossorigin="anonymous"></script>
+<script src="js/util.js"></script>
+<script src="js/db.js"></script>
+<script src="js/settings.js"></script>
+<script src="js/library.js"></script>
+<script src="js/reader.js"></script>
+<script src="js/highlighter.js"></script>
+<script src="js/notes.js"></script>
+<script src="js/exporter.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

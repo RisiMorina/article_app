@@ -93,6 +93,12 @@ highlights: [{ id, page, text, rects: [{x,y,w,h}], color, note, createdAt, updat
 - `Library._refreshView()` redraws the hero or the library, whichever is showing.
 - The room is dark green in both themes on purpose (it is a scene, not UI).
 
+## Textures (made with Higgsfield, gpt_image_2_6, 2026-11-13)
+`images/` holds WebP textures used by the bookcases and the hero room: `wood.webp` (walnut: frame, cornice, back panel, shelves),
+`wallpaper.webp` (green damask), `floor.webp` (oak planks), `rug.webp`, `leather.webp` (grey book cloth, blended with `overlay` over each
+spine colour). All are AI-generated, tileable or flat, no text. The original PNGs are not kept in the project (large); re-generate with
+similar prompts if they need changing. A bookcase is `.cabinet-frame` (wood) > `.cabinet-inner` (dark panelled back) > shelves.
+
 ## How things work
 - Pages are placeholders sized from the real page sizes. An IntersectionObserver renders canvas + text layer
   1200px before a page scrolls into view, and frees pages that are more than 5000px away.

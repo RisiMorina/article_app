@@ -88,7 +88,7 @@ const Library = {
     const inner = WALL - GUTTER - 68;
     // Books shrink so about three shelves per wall fit the screen; the whole room scales down on narrow windows.
     const vh = window.innerHeight, vw = window.innerWidth;
-    const k = Math.min(Math.max(((vh - 130 - 120 - 40) / Math.max(half, 1) - 44) / 221, 0.66), 0.9);
+    const k = Math.min(Math.max(((vh - 130 - 120 - 40) / Math.max(half, 1) - 44) / 221, 0.8), 1);
     const scale = Math.min(1, vw / 1180);
     box.style.setProperty('--k', k.toFixed(3));
     box.style.setProperty('--rs', scale.toFixed(3));
@@ -231,7 +231,7 @@ const Library = {
 
   _cabinet(shelves, width, side) {
     return h('div', { class: 'cabinet ' + side },
-      h('div', { class: 'cabinet-frame' }, ...shelves.map(s => this._shelf(s, width, side))));
+      h('div', { class: 'cabinet-frame' }, h('div', { class: 'cabinet-inner' }, ...shelves.map(s => this._shelf(s, width, side)))));
   },
 
   /** One shelf = one folder, labelled beside the bookcase. Books wrap onto an extra board when a row is full. */

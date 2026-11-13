@@ -607,3 +607,39 @@ body.resizing .r-body { transition: none; }
 .accent-opt .sw { width: 20px; height: 20px; border-radius: 50%; background: var(--sw); }
 .accent-opt:has(input:checked) { border-color: var(--sw); box-shadow: 0 0 0 2px color-mix(in srgb, var(--sw) 30%, transparent); }
 .accent-opt:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+/* =========================================================
+   Start screen: the first screen is only the bookcases, the rest is below
+   ========================================================= */
+.welcome { display: block; min-height: 0; padding: 0; }
+.welcome-more {
+  position: relative; min-height: 100vh; min-height: 100dvh; display: grid; grid-template-columns: minmax(0, 520px) 300px;
+  gap: clamp(48px, 8vw, 110px); align-items: center; justify-content: center; padding: 48px;
+}
+@media (max-width: 1180px) { .welcome-more { grid-template-columns: minmax(0, 520px) 240px; } }
+.hero {
+  position: relative; display: flex; align-items: center; justify-content: center;
+  height: 100vh; height: 100svh; min-height: 520px; padding: 28px 0 56px;
+}
+.hero-shelves { --k: .8; width: 100%; max-width: 1500px; margin: 0 auto; --gutter: 112px; }
+.hero-shelves.cabinets.two { margin: 0 auto; padding: 0 var(--gutter); }
+.hero-shelves .cabinet:hover, .hero-shelves .cabinet:focus-within { position: relative; z-index: 5; }
+.hero-shelves .shelf-row { padding-top: 26px; }
+.hero-shelves .shelf-row.is-empty { padding-top: 10px; }
+.hero-shelves .books { min-height: calc(176px * var(--k)); }
+.hero-shelves .is-empty .books { min-height: calc(120px * var(--k)); }
+.hero-shelves .book { height: calc(var(--bh) * var(--k)); width: calc(var(--bw) * (.75 + var(--k) * .3)); }
+.hero-shelves .spine-title { font-size: 12.5px; }
+/* the top shelf has no room above it for the card, so it opens below the book */
+.hero-shelves .shelf:first-child .book-card { bottom: auto; top: calc(100% + 12px); }
+.hero-shelves .shelf:first-child .book-card::after { top: auto; bottom: 100%; }
+.hero-down {
+  position: absolute; left: 50%; bottom: 14px; width: 40px; height: 40px; margin-left: -20px; display: grid; place-items: center;
+  border-radius: 50%; color: var(--muted); transition: background-color .15s, color .15s;
+}
+.hero-down:hover { background: var(--accent-soft); color: var(--accent); }
+.hero-down .ic { width: 22px; height: 22px; }
+/* the one moment: books drop onto their shelves, one after another, once per visit */
+.hero-shelves.intro .book { animation: shelve .75s cubic-bezier(.2, .8, .2, 1) backwards; animation-delay: calc(var(--i, 0) * 38ms + .15s); }
+@keyframes shelve { from { opacity: 0; transform: translateY(-40px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .hero-shelves.intro .book { animation: none; } }

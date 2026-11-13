@@ -20,7 +20,9 @@ const Library = {
     this.updateGreeting();
     $('#view-welcome').hidden = false;
     document.title = 'Marginalia: read and annotate PDFs';
-    try { this.articles = await DB.listArticles(); } catch (e) { this.articles = []; }
+    try { this.articles = await DB.listArticles(); this.folders = await DB.getSetting('folders', []); } catch (e) { this.articles = []; }
+    for (const a of this.articles) if (a.folder && !this._hasFolder(a.folder)) this.folders.push(a.folder);
+    this.renderHero();
     const n = this.articles.length;
     $('#welcome-library').hidden = n === 0;
     $('#welcome-library').textContent = `Open my library (${n})`;
@@ -70,7 +72,28 @@ const Library = {
     // A filter that points at a folder that is gone falls back to all.
     if (this.filter.startsWith('folder:') && !this._hasFolder(this.filter.slice(7))) this.filter = 'all';
     this.articles.sort((a, b) => b.addedAt - a.addedAt);
-    this.render();
+    this._refreshView();
+  },
+
+  /** Redraw whichever screen is showing (start screen hero or library). */
+  _refreshView() { if (!$('#view-welcome').hidden) this.renderHero(); else this.render(); },
+
+  /** The start screen's first screen: nothing but the bookcases, two cases in a corner. */
+  renderHero() {
+    const shelves = this._cases('', 'all');
+    while (shelves.length < 6) shelves.push({ title: '', blank: true, books: [] });
+    const half = Math.ceil(shelves.length / 2);
+    const box = $('#hero-shelves');
+    const W = box.clientWidth || window.innerWidth || 1200;
+    const inner = Math.max((W - 2 * 112 - 28) / 2 - 68, 180);
+    // Shrink the books so a cabinet of about three shelves fits the first screen.
+    const rowsPer = Math.max(half, 1);
+    const k = Math.min(Math.max(((window.innerHeight - 150) / rowsPer - 44) / 221, 0.5), 0.9);
+    box.style.setProperty('--k', k.toFixed(3));
+    box.classList.toggle('intro', !this._heroShown);
+    this._heroShown = true;
+    box.replaceChildren(this._cabinet(shelves.slice(0, half), inner, 'left'), this._cabinet(shelves.slice(half), inner, 'right'));
+    $$('.book', box).forEach((b, i) => b.style.setProperty('--i', i));
   },
 
   _hasFolder(name) { return this.folders.some(f => f.toLowerCase() === name.toLowerCase()); },
@@ -129,8 +152,8 @@ const Library = {
   },
 
   /** Shelves to draw for the current view: [{ title, folder (undefined = no drop), books }]. One shelf per folder. */
-  _cases(q) {
-    const f = this.filter, all = this.articles;
+  _cases(q, f = this.filter) {
+    const all = this.articles;
     let cases;
     if (f === 'toread') cases = [{ title: 'Reading list', books: all.filter(a => a.toRead) }];
     else if (f === 'unsorted') cases = [{ title: 'No folder', folder: '', books: all.filter(a => !a.folder) }];
@@ -197,7 +220,7 @@ const Library = {
       used += w + 3;
     }
     const droppable = c.folder !== undefined;
-    const label = h('div', { class: 'shelf-label' },
+    const label = !c.title ? null : h('div', { class: 'shelf-label' },
       h('button', {
         type: 'button', class: 'case-name', text: c.title, title: 'Show only this shelf',
         onclick: () => { this.filter = c.title === 'Reading list' && c.folder === undefined ? 'toread' : c.folder ? 'folder:' + c.folder : this.folders.length ? 'unsorted' : 'all'; this.render(); }
@@ -208,7 +231,7 @@ const Library = {
         i === 0 ? label : null,
         h('ul', { class: 'books' },
           ...r.map(({ a, x }) => this._book(a, side === 'right' || x > width / 2)),
-          !c.books.length ? h('li', { class: 'shelf-empty', text: droppable ? 'Empty. Drag a book here.' : 'Nothing here yet.' }) : null),
+          !c.books.length && !c.blank ? h('li', { class: 'shelf-empty', text: droppable ? 'Empty. Drag a book here.' : 'Nothing here yet.' }) : null),
         h('div', { class: 'plank', 'aria-hidden': 'true' }))));
     if (droppable) {
       el.addEventListener('dragover', e => {
@@ -288,18 +311,18 @@ const Library = {
     a.toRead = on;
     await DB.putArticle(a);
     toast(on ? 'Added to your reading list' : 'Taken off your reading list');
-    this.render();
+    this._refreshView();
   },
 
   async moveTo(a, value) {
     if (value === '__new__') {
       const name = await this.askFolderName();
-      if (!name) { this.render(); return; }
+      if (!name) { this._refreshView(); return; }
       value = name;
     }
     a.folder = value;
     await DB.putArticle(a);
-    this.render();
+    this._refreshView();
     toast(value ? `Moved to “${value}”` : 'Taken out of its folder');
   },
 
@@ -424,7 +447,8 @@ const Library = {
     dz.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); } });
 
     $('#search').addEventListener('input', e => { this.query = e.target.value; this.render(); });
-    window.addEventListener('resize', debounce(() => { if (!$('#view-library').hidden) this.render(); }, 200));
+    window.addEventListener('resize', debounce(() => { if (!$('#view-welcome').hidden || !$('#view-library').hidden) this._refreshView(); }, 200));
+    $('#hero-down').addEventListener('click', e => { e.preventDefault(); $('#welcome-more').scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth' }); });
     $('#btn-folder-new').addEventListener('click', () => this.newFolder());
     $('#btn-folder-rename').addEventListener('click', () => this.renameFolder());
     $('#btn-folder-delete').addEventListener('click', () => this.deleteFolder());

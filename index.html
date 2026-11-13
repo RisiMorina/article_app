@@ -28,34 +28,41 @@
 
 <div id="app">
 
-  <!-- ============ WELCOME ============ -->
+  <!-- ============ WELCOME: first screen = only the bookcases, scroll for the rest ============ -->
   <main id="view-welcome" class="welcome" hidden aria-labelledby="welcome-title">
-    <button type="button" class="btn ghost icon-only welcome-settings" id="btn-settings-welcome" aria-label="Settings" title="Settings"></button>
-    <div class="welcome-copy">
-      <p class="brand"><span class="mark" aria-hidden="true"></span>Marginalia</p>
-      <p id="greet" class="greet" hidden></p>
-      <h1 id="welcome-title">Do you want to work on an article?</h1>
-      <p class="lead">Open a PDF, highlight what matters and write down what you think. Everything stays in this browser.</p>
-      <div class="welcome-actions">
-        <button type="button" class="btn primary big" id="welcome-open">Choose a PDF</button>
-        <a class="btn big" id="welcome-library" href="#/library">Open my library</a>
-        <a class="btn big" id="welcome-toread" href="#/library" hidden>Reading list</a>
+    <section class="hero" aria-label="Your bookcases">
+      <div id="hero-shelves" class="shelves cabinets two hero-shelves"></div>
+      <a class="hero-down" href="#welcome-more" id="hero-down" aria-label="Scroll down" title="Scroll down"><span data-icon="chevron-down"></span></a>
+    </section>
+
+    <section id="welcome-more" class="welcome-more">
+      <button type="button" class="btn ghost icon-only welcome-settings" id="btn-settings-welcome" aria-label="Settings" title="Settings"></button>
+      <div class="welcome-copy">
+        <p class="brand"><span class="mark" aria-hidden="true"></span>Marginalia</p>
+        <p id="greet" class="greet" hidden></p>
+        <h1 id="welcome-title">Do you want to work on an article?</h1>
+        <p class="lead">Open a PDF, highlight what matters and write down what you think. Everything stays in this browser.</p>
+        <div class="welcome-actions">
+          <button type="button" class="btn primary big" id="welcome-open">Choose a PDF</button>
+          <a class="btn big" id="welcome-library" href="#/library">Open my library</a>
+          <a class="btn big" id="welcome-toread" href="#/library" hidden>Reading list</a>
+        </div>
+        <p class="hint">or drop a PDF anywhere on this page</p>
+        <a id="welcome-continue" class="continue" href="#/library" hidden>
+          <span class="continue-thumb" aria-hidden="true"></span>
+          <span class="continue-text"><small>Pick up where you left off</small><strong id="continue-title"></strong></span>
+          <span class="continue-go" aria-hidden="true">Continue</span>
+        </a>
       </div>
-      <p class="hint">or drop a PDF anywhere on this page</p>
-      <a id="welcome-continue" class="continue" href="#/library" hidden>
-        <span class="continue-thumb" aria-hidden="true"></span>
-        <span class="continue-text"><small>Pick up where you left off</small><strong id="continue-title"></strong></span>
-        <span class="continue-go" aria-hidden="true">Continue</span>
-      </a>
-    </div>
-    <div class="sheet" aria-hidden="true">
-      <span class="sheet-title"></span>
-      <span class="ln l1"></span><span class="ln l2"></span>
-      <span class="ln l3 hl hl-y"></span><span class="ln l4 hl hl-y"></span>
-      <span class="ln l5"></span><span class="ln l6"></span>
-      <span class="ln l7 hl hl-g"></span><span class="ln l8"></span><span class="ln l9"></span>
-      <span class="note-bubble"></span>
-    </div>
+      <div class="sheet" aria-hidden="true">
+        <span class="sheet-title"></span>
+        <span class="ln l1"></span><span class="ln l2"></span>
+        <span class="ln l3 hl hl-y"></span><span class="ln l4 hl hl-y"></span>
+        <span class="ln l5"></span><span class="ln l6"></span>
+        <span class="ln l7 hl hl-g"></span><span class="ln l8"></span><span class="ln l9"></span>
+        <span class="note-bubble"></span>
+      </div>
+    </section>
   </main>
 
   <!-- ============ LIBRARY ============ -->

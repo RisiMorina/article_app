@@ -80,6 +80,14 @@ highlights: [{ id, page, text, rects: [{x,y,w,h}], color, note, createdAt, updat
 - The eraser removes whole strokes it touches. Ink is saved with the article and travels in backups, but it is not
   part of the Markdown/HTML/print export (notes only).
 
+## Start screen hero
+- `#/` has two sections. The first screen (`.hero`, 100svh) shows **only the bookcases**: the real library as two cases in a
+  corner (`Library.renderHero`), padded with unlabelled empty shelves up to 6 so a new library still looks like a room.
+  Books are scaled with `--k` so about three shelves per case fit the screen. A small chevron scrolls down.
+- Below it (`#welcome-more`) is the old start content: heading, Choose a PDF / Open my library / Reading list, Continue card.
+- Intro moment: the books drop onto their shelves one after another, once per page load (`.intro`, off with reduced motion).
+- `Library._refreshView()` redraws the hero or the library, whichever is showing (used after moving a book or toggling To read).
+
 ## How things work
 - Pages are placeholders sized from the real page sizes. An IntersectionObserver renders canvas + text layer
   1200px before a page scrolls into view, and frees pages that are more than 5000px away.

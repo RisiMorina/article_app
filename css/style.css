@@ -800,11 +800,6 @@ body.resizing .r-body { transition: none; }
 /* =========================================================
    Fuller, richer shelves: decorative books packed around the real ones, fluted pilasters, carved caps, plinth
    ========================================================= */
-.filler { position: relative; flex: none; width: var(--bw); height: var(--bh); transform-style: preserve-3d; pointer-events: none; }
-.filler .body { position: absolute; inset: 0; transform: translateZ(-14px); transform-style: preserve-3d; }
-.filler .spine { padding: 0; cursor: default; }
-.filler.plate .spine::after { content: ""; position: absolute; left: 16%; right: 16%; top: 26%; height: 20%; border: 1px solid rgb(240 210 140 / .6); background: rgb(0 0 0 / .25); }
-.hero-room .filler { height: calc(var(--bh) * var(--k)); width: calc(var(--bw) * (.75 + var(--k) * .3)); }
 .spine-title { text-shadow: 0 1px 0 rgb(0 0 0 / .35); }
 
 /* fluted sides and dentil-like top (the same vertical grooves read as flutes on the sides and teeth on the cornice) */
@@ -827,3 +822,18 @@ body.resizing .r-body { transition: none; }
   background: linear-gradient(rgb(255 235 200 / .35) 0 2px, transparent 2px 12px, rgb(0 0 0 / .5)), linear-gradient(rgb(196 128 66 / .28), rgb(196 128 66 / .28)), url("../images/wood.webp") 0 60% / 300px;
   box-shadow: 0 0 0 1px rgb(0 0 0 / .55), 0 8px 12px -4px rgb(0 0 0 / .6);
 }
+
+/* a real shelf: books lean on each other and some lie flat in a stack */
+.book .body { transform: translateZ(-14px) rotate(var(--lean, 0deg)); transform-origin: 50% 100%; }
+.book.lean-l .body { transform-origin: 100% 100%; }
+.book.lean-r .body { transform-origin: 0 100%; }
+.book.lean-l { margin-left: calc(var(--bh) * var(--k, 1) * var(--ls, 0)); }
+.book.lean-r { margin-right: calc(var(--bh) * var(--k, 1) * var(--ls, 0)); }
+.stack { display: flex; flex-direction: column-reverse; align-items: flex-start; flex: none; gap: 0; margin-left: 10px; }
+.stack .book { position: relative; margin-left: var(--off, 0px); transform: rotate(var(--tilt, 0deg)); }
+.book.flat .spine { writing-mode: horizontal-tb; display: flex; align-items: center; padding: 0 16px; }
+.book.flat .spine-title { padding: 0; max-height: none; max-width: 100%; text-align: left; }
+.book.flat.toread::after { display: none; }
+.book.flat.toread .spine { box-shadow: inset 8px 0 0 var(--accent); }
+.stack .book:hover, .stack .book:focus-within { transform: translate3d(0, -2px, calc(var(--D) * .42)) rotate(var(--tilt, 0deg)); }
+.hero-room .stack .book { width: calc(var(--bw) * var(--k)); height: calc(var(--bh) * (.6 + var(--k) * .4)); }

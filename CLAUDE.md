@@ -110,14 +110,15 @@ similar prompts if they need changing. A bookcase is `.cabinet-frame` (wood) > `
 - Hover/focus pulls a book out towards you (`translate3d(0, -3px, 0.42 * --D)`). In the library page the same classes work, with the
   `.cabinets` perspective.
 
-## Packed shelves (decorative books)
-- `Library._rowItems` packs every row with **decorative books** (`li.filler`, `aria-hidden`, no title, not clickable) around your real ones, so
-  a shelf looks like a full library. They are not articles and are not counted. A real folder with no articles stays empty on purpose; blank
-  padding shelves in the hero are filled with decorative books. Colours come from `Library._palette` (vintage: burgundy, forest, navy, ochre...),
-  widths/heights from a seeded hash, so a shelf looks the same on every visit.
-- Row capacity must match the real width: in the hero the books are scaled by `.75 + .3 * k` and each case loses `--D` to its corner margin
-  (`renderHero` passes `(inner - 130k - 4) / bw`). If books stick out of a case, check that arithmetic first.
+## Natural shelves
+- Only real articles are on the shelves (no decorative filler books; an empty folder is an empty shelf, on purpose).
+- `Library._rowItems` arranges each row like a real shelf, decided from a hash of ids (same on every visit): mostly standing books, the last one
+  leaning back on the others (`.lean-l`, 13 to 21 degrees), now and then one leaning on its neighbour (`.lean-r`), and in rows of 4+ books a
+  short **stack lying flat** at the end (`li.stack` > `.book.flat`, spine text horizontal, small offsets and tilts).
+  Leaning is `rotate(--lean)` on `.body` with the pivot at the bottom corner, plus a margin of `height * sin(lean)` so it does not overlap.
+- Row capacity: books count `width + 6 + 3` px each; in the hero the width is `(inner - 130k - 4) / (.75 + .3k)`. If books stick out of a case, check that.
 - The case has fluted pilasters / dentil cornice (grooves in the frame ring), carved caps (`.cab-cap`) and a plinth (`.cab-plinth`).
+- `Library._palette` holds the vintage spine colours.
 
 ## How things work
 - Pages are placeholders sized from the real page sizes. An IntersectionObserver renders canvas + text layer

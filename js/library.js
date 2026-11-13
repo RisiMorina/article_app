@@ -245,7 +245,7 @@ const Library = {
     const rows = [[]];
     let used = 0;
     for (const a of c.books) {
-      const w = this._bookWidth(a);
+      const w = this._bookWidth(a) + 6;
       if (used + w > width && rows.at(-1).length) { rows.push([]); used = 0; }
       rows.at(-1).push({ a, x: used });
       used += w + 3;
@@ -282,41 +282,31 @@ const Library = {
     return el;
   },
 
-  /** One row of a shelf: your real books, with decorative books packed in around them so the shelf looks full.
-      A folder with no books stays empty, so it is clear it is empty. */
+  /** One row of a shelf, arranged like a real one: mostly standing, the odd book leaning on its neighbour, and a short stack
+      lying flat at the end. Everything is decided from a hash of the ids, so it looks the same on every visit. */
   _rowItems(row, width, c, rowIndex, side) {
-    const real = row.map(({ a, x }) => this._book(a, side === 'right' || x > width / 2));
-    if (!c.books.length && !c.blank) return real;
-    let room = width - row.reduce((n, { a }) => n + this._bookWidth(a) + 3, 0) - 6;
-    let seed = this._hash((c.title || 'blank') + ':' + rowIndex + ':' + (c.books.length));
-    const fill = [];
-    while (room > 20) {
-      seed = (seed * 1664525 + 1013904223) >>> 0;
-      let w = 15 + (seed >>> 8) % 26;
-      if (w + 3 > room) w = Math.max(room - 3, 12);
-      fill.push(this._filler(seed, w));
-      room -= w + 3;
-    }
-    // spread the real books evenly between the decorative ones
-    const out = [], m = real.length, n = fill.length;
-    let fi = 0;
-    real.forEach((b, k) => {
-      const upto = Math.round((k + 1) * n / (m + 1));
-      while (fi < upto) out.push(fill[fi++]);
-      out.push(b);
+    const books = row.map(r => r.a);
+    const n = books.length;
+    const seed = this._hash(c.title + ':' + rowIndex + ':' + n);
+    let stack = [];
+    let standing = books;
+    if (n >= 4 && seed % 2 === 0) { const k = Math.min(3, n - 2); standing = books.slice(0, n - k); stack = books.slice(n - k); }
+    const items = standing.map((a, i) => {
+      const hh = this._hash(a.id + 'lean');
+      const last = i === standing.length - 1;
+      let deg = 0;
+      if (last && standing.length > 1 && !stack.length) deg = -(13 + hh % 9);            // the last book leans back on the others
+      else if (i < standing.length - 1 && hh % 6 === 0) deg = 7 + (hh >>> 4) % 9;         // now and then one leans on the next book
+      return this._book(a, side === 'right' || row[i].x > width / 2, { lean: deg });
     });
-    while (fi < n) out.push(fill[fi++]);
-    return out;
-  },
-
-  /** A decorative book: no title, not clickable. */
-  _filler(seed, w) {
-    const [bg, fg] = this._palette[(seed >>> 4) % this._palette.length];
-    const hgt = Math.round(150 + ((seed >>> 12) % 72));            // 150 to 221, like the real books
-    return h('li', {
-      class: 'filler' + (((seed >>> 20) % 3) === 0 ? ' plate' : ''), 'aria-hidden': 'true',
-      style: { '--bw': w + 'px', '--bh': hgt + 'px', '--bg': bg, '--fg': fg }
-    }, h('div', { class: 'body' }, h('span', { class: 'spine' }), h('span', { class: 'face top' })));
+    if (stack.length) {
+      items.push(h('li', { class: 'stack' }, ...stack.map((a, i) => {
+        const hh = this._hash(a.id + 'flat');
+        const len = 150 + hh % 50, thick = Math.max(20, Math.round(this._bookWidth(a) * 0.62));
+        return this._book(a, side === 'right', { flat: true, len, thick, off: (hh >>> 6) % 9, tilt: ((hh >>> 3) % 5 - 2) * 0.5 });
+      })));
+    }
+    return items;
   },
 
   // Thicker books for longer articles, a little height variety so a shelf looks lived in.
@@ -329,7 +319,7 @@ const Library = {
   ],
   _spine(a) { return this._palette[this._hash(a.id + 'x') % this._palette.length]; },
 
-  _book(a, alignRight) {
+  _book(a, alignRight, opt = {}) {
     const title = displayTitle(a);
     const sub = [a.info.authors, a.info.year, a.info.source].map(s => (s || '').trim()).filter(Boolean).join(' · ');
     const n = a.highlights.length;
@@ -343,9 +333,13 @@ const Library = {
       h('option', { value: '__new__', text: 'New folder…' }));
     select.value = a.folder || '';
     const href = '#/article/' + encodeURIComponent(a.id);
-    const li = h('li', {
-      class: 'book' + (a.toRead ? ' toread' : '') + (alignRight ? ' card-right' : ''), dataset: { id: a.id, title, sub }, draggable: 'true',
-      style: { '--bw': this._bookWidth(a) + 'px', '--bh': this._bookHeight(a) + 'px', '--bg': bg, '--fg': fg }
+    const lean = opt.lean || 0;
+    const style = { '--bw': (opt.flat ? opt.len : this._bookWidth(a)) + 'px', '--bh': (opt.flat ? opt.thick : this._bookHeight(a)) + 'px', '--bg': bg, '--fg': fg };
+    if (lean) { style['--lean'] = lean + 'deg'; style['--ls'] = Math.abs(Math.sin(lean * Math.PI / 180)).toFixed(3); }
+    if (opt.flat) { style['--off'] = opt.off + 'px'; style['--tilt'] = opt.tilt + 'deg'; }
+    const li = h(opt.flat ? 'div' : 'li', {
+      class: 'book' + (a.toRead ? ' toread' : '') + (alignRight ? ' card-right' : '') + (opt.flat ? ' flat' : '') + (lean < 0 ? ' lean-l' : lean > 0 ? ' lean-r' : ''),
+      dataset: { id: a.id, title, sub }, draggable: 'true', style
     },
       h('div', { class: 'body' },
         h('a', { class: 'spine', href, draggable: 'false', 'aria-label': title + (a.toRead ? ' (on your reading list)' : '') },

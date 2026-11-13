@@ -99,7 +99,7 @@ const Library = {
     if (f === 'toread') return 'Reading list';
     if (f === 'unsorted') return 'No folder';
     if (f.startsWith('folder:')) return f.slice(7);
-    return 'All articles';
+    return 'My library';
   },
 
   _navItem(key, label, count, iconName) {
@@ -116,7 +116,7 @@ const Library = {
   renderNav() {
     const all = this.articles;
     const items = [
-      this._navItem('all', 'All articles', all.length, 'inbox'),
+      this._navItem('all', 'Whole library', all.length, 'inbox'),
       this._navItem('toread', 'Reading list', all.filter(a => a.toRead).length, 'bookmark'),
       h('li', { class: 'folder-sep', role: 'presentation' }, h('span', { text: 'Folders' }))
     ];
@@ -128,36 +128,110 @@ const Library = {
     }
   },
 
+  /** The bookcases to draw for the current view: [{ title, folder (undefined = no drop), books }]. */
+  _cases(q) {
+    const f = this.filter, all = this.articles;
+    let cases;
+    if (f === 'toread') cases = [{ title: 'Reading list', books: all.filter(a => a.toRead) }];
+    else if (f === 'unsorted') cases = [{ title: 'No folder', folder: '', books: all.filter(a => !a.folder) }];
+    else if (f.startsWith('folder:')) { const n = f.slice(7); cases = [{ title: n, folder: n, books: all.filter(a => a.folder === n) }]; }
+    else {
+      cases = this.folders.map(n => ({ title: n, folder: n, books: all.filter(a => a.folder === n) }));
+      const loose = all.filter(a => !a.folder);
+      if (loose.length || !this.folders.length) cases.push({ title: this.folders.length ? 'No folder' : 'My books', folder: '', books: loose });
+    }
+    if (q) cases = cases.map(c => ({ ...c, books: c.books.filter(a => this._haystack(a).includes(q)) })).filter(c => c.books.length);
+    return cases;
+  },
+
   render() {
     this.renderNav();
     const q = this.query.trim().toLowerCase();
-    const list = $('#article-list');
     const inView = this.articles.filter(a => this._inView(a));
-    const shown = q ? inView.filter(a => this._haystack(a).includes(q)) : inView;
+    const cases = this._cases(q);
+    const shownCount = cases.reduce((n, c) => n + c.books.length, 0);
 
     $('#lib-view-title').textContent = this._viewTitle();
     $('#folder-tools').hidden = !this.filter.startsWith('folder:');
 
-    list.replaceChildren(...shown.map(a => this._row(a)));
+    const width = Math.max(($('#shelves').clientWidth || 760) - 2 * 28, 200);
+    $('#shelves').replaceChildren(...cases.map(c => this._case(c, width)));
 
     const empty = $('#lib-empty');
-    empty.hidden = shown.length > 0;
-    if (!shown.length) {
+    empty.hidden = shownCount > 0 || (!q && this.filter !== 'toread' && !!this.articles.length);
+    if (!shownCount) {
       if (q) empty.textContent = `Nothing matches “${this.query.trim()}”.`;
-      else if (!this.articles.length) empty.textContent = 'No articles yet. Add a PDF to start your reading list.';
-      else if (this.filter === 'toread') empty.textContent = 'Your reading list is empty. Use “To read” on an article to put it here.';
-      else if (this.filter.startsWith('folder:')) empty.textContent = 'This folder is empty. Use the folder menu on an article to move it here.';
-      else empty.textContent = 'Nothing here.';
+      else if (!this.articles.length) empty.textContent = 'No books yet. Add a PDF and it goes on your shelf and your reading list.';
+      else if (this.filter === 'toread') empty.textContent = 'Your reading list is empty. Hover a book and use “To read” to put it here.';
+      else empty.textContent = '';
     }
     $('#lib-count').textContent = inView.length
-      ? (q ? `${shown.length} of ${inView.length}` : `${inView.length} ${inView.length === 1 ? 'article' : 'articles'}`)
+      ? (q ? `${shownCount} of ${inView.length}` : `${inView.length} ${inView.length === 1 ? 'article' : 'articles'}`)
       : '';
   },
 
-  _row(a) {
+  /* ---------- bookcases ---------- */
+  _hash(s) { let n = 0; for (let i = 0; i < s.length; i++) n = (n * 31 + s.charCodeAt(i)) >>> 0; return n; },
+
+  /** One bookcase = one folder. Books are split over shelves that fit the width. */
+  _case(c, width) {
+    const rows = [[]];
+    let used = 0;
+    for (const a of c.books) {
+      const w = this._bookWidth(a);
+      if (used + w > width && rows.at(-1).length) { rows.push([]); used = 0; }
+      rows.at(-1).push({ a, x: used });
+      used += w + 3;
+    }
+    const droppable = c.folder !== undefined;
+    const el = h('section', { class: 'case', 'aria-label': c.title },
+      h('div', { class: 'case-head' },
+        h('button', {
+          type: 'button', class: 'case-name', text: c.title, title: 'Open this bookcase',
+          onclick: () => { this.filter = c.title === 'Reading list' ? 'toread' : c.folder ? 'folder:' + c.folder : c.folder === '' && this.folders.length ? 'unsorted' : 'all'; this.render(); }
+        }),
+        h('span', { class: 'case-n', text: `${c.books.length} ${c.books.length === 1 ? 'book' : 'books'}` })),
+      h('div', { class: 'case-frame' },
+        ...rows.map(r => h('div', { class: 'shelf-row' },
+          h('ul', { class: 'books' },
+            ...r.map(({ a, x }) => this._book(a, x > width / 2)),
+            !c.books.length ? h('li', { class: 'shelf-empty', text: droppable ? 'Empty shelf. Drag a book here.' : 'Nothing on this shelf yet.' }) : null),
+          h('div', { class: 'plank', 'aria-hidden': 'true' })))));
+    if (droppable) {
+      el.addEventListener('dragover', e => {
+        if (!Array.from(e.dataTransfer.types || []).includes('text/x-article')) return;
+        e.preventDefault(); e.dataTransfer.dropEffect = 'move'; el.classList.add('drop');
+      });
+      el.addEventListener('dragleave', e => { if (!el.contains(e.relatedTarget)) el.classList.remove('drop'); });
+      el.addEventListener('drop', e => {
+        const id = e.dataTransfer.getData('text/x-article');
+        el.classList.remove('drop');
+        const a = this.articles.find(x => x.id === id);
+        if (!a) return;
+        e.preventDefault();
+        if ((a.folder || '') !== c.folder) this.moveTo(a, c.folder);
+      });
+    }
+    return el;
+  },
+
+  // Thicker books for longer articles, a little height variety so a shelf looks lived in.
+  _bookWidth(a) { return Math.round(Math.min(Math.max(34 + (a.numPages || 8) * 1.2, 38), 72)); },
+  _bookHeight(a) { return 176 + (this._hash(a.id) % 6) * 9; },
+  _spine(a) {
+    const palette = [
+      ['#2f4a6d', '#fff'], ['#7b4b94', '#fff'], ['#2c6e63', '#fff'], ['#a2453f', '#fff'],
+      ['#3b3f4a', '#fff'], ['#c9962b', '#241a05'], ['#5a6b2f', '#fff'], ['#8a5a3b', '#fff'],
+      ['#b0456a', '#fff'], ['#d9d2c0', '#2a2620']
+    ];
+    return palette[this._hash(a.id + 'x') % palette.length];
+  },
+
+  _book(a, alignRight) {
     const title = displayTitle(a);
     const sub = [a.info.authors, a.info.year, a.info.source].map(s => (s || '').trim()).filter(Boolean).join(' · ');
     const n = a.highlights.length;
+    const [bg, fg] = this._spine(a);
     const select = h('select', {
       class: 'art-folder', 'aria-label': `Folder for ${title}`, title: 'Move to a folder',
       onchange: e => this.moveTo(a, e.target.value)
@@ -166,26 +240,35 @@ const Library = {
       ...this.folders.map(f => h('option', { value: f, text: f })),
       h('option', { value: '__new__', text: 'New folder…' }));
     select.value = a.folder || '';
-    return h('li', { class: 'art', dataset: { id: a.id } },
-      h('a', { class: 'art-main', href: '#/article/' + encodeURIComponent(a.id) },
-        h('span', { class: 'art-thumb', style: a.thumb ? { 'background-image': `url(${a.thumb})` } : {}, 'aria-hidden': 'true' }),
-        h('span', { class: 'art-text' },
-          h('span', { class: 'art-title', text: title }),
-          sub ? h('span', { class: 'art-sub', text: sub }) : null)),
-      h('span', { class: 'art-meta' },
-        h('span', { class: 'art-count', text: `${n} ${n === 1 ? 'highlight' : 'highlights'}` }),
-        h('span', { class: 'art-date', text: 'Added ' + formatDate(a.addedAt) })),
-      select,
-      h('button', {
-        type: 'button', class: 'toread-btn', 'aria-pressed': a.toRead ? 'true' : 'false',
-        title: a.toRead ? 'On your reading list. Click to take it off.' : 'Put on your reading list',
-        onclick: () => this.setToRead(a, !a.toRead)
-      }, h('span', { html: icon('bookmark', 15) }), h('span', { text: 'To read' })),
-      h('button', {
-        type: 'button', class: 'icon-btn danger-hover', 'aria-label': `Delete ${title}`, title: 'Delete article',
-        html: icon('trash'),
-        onclick: () => this.remove(a)
-      }));
+    const href = '#/article/' + encodeURIComponent(a.id);
+    const li = h('li', {
+      class: 'book' + (a.toRead ? ' toread' : '') + (alignRight ? ' card-right' : ''), dataset: { id: a.id }, draggable: 'true',
+      style: { '--bw': this._bookWidth(a) + 'px', '--bh': this._bookHeight(a) + 'px', '--bg': bg, '--fg': fg }
+    },
+      h('a', { class: 'spine', href, draggable: 'false', 'aria-label': title + (a.toRead ? ' (on your reading list)' : '') },
+        h('span', { class: 'spine-title', text: title })),
+      h('div', { class: 'book-card' },
+        h('a', { class: 'card-title', href, draggable: 'false', text: title }),
+        sub ? h('span', { class: 'card-sub', text: sub }) : null,
+        h('span', { class: 'card-meta', text: `${n} ${n === 1 ? 'highlight' : 'highlights'} · added ${formatDate(a.addedAt)}` }),
+        h('div', { class: 'card-actions' },
+          h('button', {
+            type: 'button', class: 'toread-btn', 'aria-pressed': a.toRead ? 'true' : 'false',
+            title: a.toRead ? 'On your reading list. Click to take it off.' : 'Put on your reading list',
+            onclick: () => this.setToRead(a, !a.toRead)
+          }, h('span', { html: icon('bookmark', 15) }), h('span', { text: 'To read' })),
+          select,
+          h('button', {
+            type: 'button', class: 'icon-btn danger-hover', 'aria-label': `Delete ${title}`, title: 'Delete article',
+            html: icon('trash'), onclick: () => this.remove(a)
+          }))));
+    li.addEventListener('dragstart', e => {
+      e.dataTransfer.setData('text/x-article', a.id);
+      e.dataTransfer.effectAllowed = 'move';
+      li.classList.add('dragging');
+    });
+    li.addEventListener('dragend', () => li.classList.remove('dragging'));
+    return li;
   },
 
   async setToRead(a, on) {
@@ -328,6 +411,7 @@ const Library = {
     dz.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); } });
 
     $('#search').addEventListener('input', e => { this.query = e.target.value; this.render(); });
+    window.addEventListener('resize', debounce(() => { if (!$('#view-library').hidden) this.render(); }, 200));
     $('#btn-folder-new').addEventListener('click', () => this.newFolder());
     $('#btn-folder-rename').addEventListener('click', () => this.renameFolder());
     $('#btn-folder-delete').addEventListener('click', () => this.deleteFolder());
